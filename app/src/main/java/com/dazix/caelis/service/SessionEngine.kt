@@ -13,6 +13,7 @@ import android.util.Log
 import android.view.Surface
 import com.dazix.caelis.R
 import com.dazix.caelis.data.AdvancedSettings
+import com.dazix.caelis.data.SessionHistoryStore
 import com.dazix.caelis.data.SessionRepository
 import com.dazix.caelis.data.SettingsStore
 import com.dazix.caelis.domain.IntervalSchedule
@@ -25,6 +26,7 @@ import com.dazix.caelis.domain.TapTarget
 import com.dazix.caelis.domain.TriggerMode
 import com.dazix.caelis.domain.stability.HandheldPolicy
 import com.dazix.caelis.domain.stability.HandheldState
+import com.dazix.caelis.domain.studio.SessionRecord
 import com.dazix.caelis.monitor.BatteryMonitor
 import com.dazix.caelis.monitor.MotionMonitor
 import com.dazix.caelis.monitor.MotionSource
@@ -94,6 +96,7 @@ class SessionEngine(
     private val settings: SettingsStore = SettingsStore(service),
     private val runState: RunStateStore = RunStateStore(service),
     private val motion: MotionSource = MotionMonitor(service),
+    private val history: SessionHistoryStore = SessionHistoryStore(service),
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
 ) {
 
@@ -436,6 +439,7 @@ class SessionEngine(
         // A shot whose verification was still open is a photo that exists: count it before the final
         // snapshot, or a session stopped mid-verification would under-report by one.
         commitPendingShot()
+        val wasRunning = running
         running = false
         paused = false
         autoPauseReason = null
@@ -443,6 +447,7 @@ class SessionEngine(
         handler.removeCallbacksAndMessages(guardToken)
         releaseWakeLock()
         if (reason == StopReason.SERVICE_LOST) runState.markServiceLost() else runState.markStopped()
+        if (wasRunning) recordHistory(history, config?.mode, sessionOriginElapsed, shotsTaken)
         Log.i(TAG, "session stop reason=$reason shots=$shotsTaken")
         SessionRepository.update {
             it.copy(
@@ -1265,13 +1270,41 @@ class SessionEngine(
         private const val MAX_WAKE_LOCK_MS = 10 * 60_000L
 
         /**
+         * Puts a finished time-lapse into Studio's history. A periodic tap is not a camera
+         * (`CameraProfiles.passthrough`) and leaves no frames to build from, so it is not recorded.
+         * A failed write costs only the Studio shortcut, never the stop.
+         */
+        private fun recordHistory(history: SessionHistoryStore, mode: TriggerMode?, originElapsed: Long, shots: Int) {
+            val target = (mode as? TriggerMode.Timelapse)?.targetPackage ?: return
+            val record = SessionRecord.finished(
+                originElapsedMs = originElapsed,
+                nowElapsedMs = SystemClock.elapsedRealtime(),
+                nowWallMs = System.currentTimeMillis(),
+                shots = shots,
+                targetPackage = target,
+            ) ?: return
+            runCatching { history.add(record) }.onFailure { Log.w(TAG, "session history not written", it) }
+        }
+
+        /**
          * Records that a run ended because the accessibility service went away, from a context that
          * has no engine left to ask (see [SessionAlarmReceiver]).
          */
         fun recordServiceLost(context: Context) {
             val runState = RunStateStore(context)
             if (!runState.wasRunning) return
+            // Read before markServiceLost, which drops the plan; null after a reboot, and then the
+            // elapsed origin could not be put on the wall clock anyway.
+            val run = runState.liveRun()
             runState.markServiceLost()
+            if (run != null) {
+                recordHistory(
+                    SessionHistoryStore(context),
+                    run.plan.config.mode,
+                    run.plan.sessionOriginElapsed,
+                    runState.shotsTaken,
+                )
+            }
             SessionRepository.update {
                 it.copy(
                     state = SessionState.Stopped(
