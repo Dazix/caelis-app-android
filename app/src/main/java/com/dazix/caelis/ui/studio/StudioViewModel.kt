@@ -7,8 +7,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dazix.caelis.data.SessionHistoryStore
 import com.dazix.caelis.data.studio.FrameSource
+import com.dazix.caelis.data.studio.StudioSettingsStore
 import com.dazix.caelis.domain.studio.MediaKind
-import com.dazix.caelis.domain.studio.Resolution
+import com.dazix.caelis.domain.studio.StudioOptions
 import com.dazix.caelis.domain.studio.SessionFrameWindow
 import com.dazix.caelis.domain.studio.SessionRecord
 import com.dazix.caelis.media.StackKind
@@ -73,8 +74,19 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
     private val stacker = StackRunner(application)
     private val encoder = VideoEncoder(application)
 
+    private val settings = StudioSettingsStore(application)
+
     private val state = MutableStateFlow(StudioUiState())
     val uiState: StateFlow<StudioUiState> = state.asStateFlow()
+
+    private val optionsState = MutableStateFlow(settings.load())
+    val options: StateFlow<StudioOptions> = optionsState.asStateFlow()
+
+    fun updateOptions(transform: (StudioOptions) -> StudioOptions) {
+        val updated = transform(optionsState.value).sanitized()
+        optionsState.value = updated
+        settings.save(updated)
+    }
 
     private var running: Job? = null
 
@@ -129,6 +141,9 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
             .map { frames.documentUri(tree, it) }
         if (picked.isEmpty()) return null
         val name = outputName(session, action)
+        // Read once at the start: changing an option during a run applies to the next one.
+        val chosen = optionsState.value
+        val video = TimelapseOptions(chosen.fps, chosen.resolution, chosen.aspect, chosen.deflicker)
         val percent = { done: Int, total: Int -> progress(if (total > 0) done * 100 / total else null) }
         return when (action) {
             StudioAction.TRAILS, StudioAction.AVERAGE -> {
@@ -138,8 +153,8 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
                     StackResult.NoFrames -> null
                 }
             }
-            StudioAction.VIDEO -> encoder.timelapse(picked, TimelapseOptions(), name) { progress(it) } to 0
-            StudioAction.JOIN -> encoder.join(picked, removeAudio = false, name) { progress(it) } to 0
+            StudioAction.VIDEO -> encoder.timelapse(picked, video, name) { progress(it) } to 0
+            StudioAction.JOIN -> encoder.join(picked, removeAudio = chosen.joinWithoutAudio, name) { progress(it) } to 0
             StudioAction.GROWING_TRAILS -> {
                 val dir = File(getApplication<Application>().cacheDir, "studio_snapshots").apply {
                     deleteRecursively()
@@ -148,12 +163,13 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
                 try {
                     // Half of the work is the stack, half the encode.
                     val snaps = stacker.growingSnapshots(
-                        picked, GROWING_EVERY, Resolution.FHD.longEdge, Resolution.FHD.shortEdge, dir,
+                        picked, GROWING_EVERY, chosen.resolution.longEdge, chosen.resolution.shortEdge, dir,
                     ) { done, total -> progress(done * 50 / total) } ?: return null
                     if (snaps.isEmpty()) return null
                     encoder.timelapse(
                         snaps.map(Uri::fromFile),
-                        TimelapseOptions(deflicker = false),
+                        // A growing trail only ever brightens; deflicker would fight exactly that.
+                        video.copy(deflicker = false),
                         name,
                     ) { progress(50 + it / 2) } to 0
                 } finally {

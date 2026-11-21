@@ -45,6 +45,22 @@
     <string name="studio_folder_change">Zmień folder</string>
     <string name="studio_sessions_title">Ukończone serie</string>
     <string name="studio_sessions_empty">Brak ukończonego timelapse.</string>
+    <string name="studio_options_title">Wynik</string>
+    <string name="studio_options_fps">Klatki na sekundę</string>
+    <string name="studio_options_resolution">Rozdzielczość</string>
+    <string name="studio_options_aspect">Proporcje</string>
+    <string name="studio_options_aspect_original">Pełny</string>
+    <string name="studio_options_deflicker">Wyrównaj migotanie</string>
+    <string name="studio_options_deflicker_summary">Wygładza skoki jasności między zdjęciami, ściemnianie o zachodzie zostaje</string>
+    <string name="studio_options_join_mute">Połącz filmy bez dźwięku</string>
+    <string name="studio_session_length">≈ %1$.1f s filmu</string>
+    <string name="home_studio_shortcut_summary">Film, ślady gwiazd lub średnia w Studio</string>
+    <plurals name="home_studio_shortcut">
+        <item quantity="one">Utwórz z %1$d zdjęcia</item>
+        <item quantity="few">Utwórz z %1$d zdjęć</item>
+        <item quantity="many">Utwórz z %1$d zdjęć</item>
+        <item quantity="other">Utwórz z %1$d zdjęcia</item>
+    </plurals>
     <string name="studio_session_found_unknown">zdjęcia nie wyszukane</string>
     <string name="studio_action_trails">Ślady gwiazd</string>
     <string name="studio_action_average">Średnia</string>

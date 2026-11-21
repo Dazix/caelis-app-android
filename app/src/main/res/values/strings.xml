@@ -45,6 +45,20 @@
     <string name="studio_folder_change">Change folder</string>
     <string name="studio_sessions_title">Finished sessions</string>
     <string name="studio_sessions_empty">No finished time-lapse yet.</string>
+    <string name="studio_options_title">Output</string>
+    <string name="studio_options_fps">Frames per second</string>
+    <string name="studio_options_resolution">Resolution</string>
+    <string name="studio_options_aspect">Aspect</string>
+    <string name="studio_options_aspect_original">Full</string>
+    <string name="studio_options_deflicker">Even out flicker</string>
+    <string name="studio_options_deflicker_summary">Smooths brightness jumps between photos, keeps a sunset getting darker</string>
+    <string name="studio_options_join_mute">Join videos without sound</string>
+    <string name="studio_session_length">≈ %1$.1f s of video</string>
+    <string name="home_studio_shortcut_summary">Video, star trails or an average in Studio</string>
+    <plurals name="home_studio_shortcut">
+        <item quantity="one">Build from %1$d shot</item>
+        <item quantity="other">Build from %1$d shots</item>
+    </plurals>
     <string name="studio_session_found_unknown">photos not searched</string>
     <string name="studio_action_trails">Star trails</string>
     <string name="studio_action_average">Average</string>

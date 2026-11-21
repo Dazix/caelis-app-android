@@ -37,6 +37,12 @@ import com.dazix.caelis.data.studio.FrameSource
 import com.dazix.caelis.ui.CardTone
 import com.dazix.caelis.ui.ScreenScaffold
 import com.dazix.caelis.ui.SectionCard
+import com.dazix.caelis.ui.SegmentedChoice
+import com.dazix.caelis.ui.SwitchRow
+import com.dazix.caelis.domain.studio.Aspect
+import com.dazix.caelis.domain.studio.OutputPlan
+import com.dazix.caelis.domain.studio.Resolution
+import com.dazix.caelis.domain.studio.StudioOptions
 
 /**
  * Studio: building a video or a stacked picture from a finished session's frames. This first version
@@ -87,6 +93,9 @@ fun StudioScreen(
             }
         }
 
+        val options by viewModel.options.collectAsStateWithLifecycle()
+        OptionsCard(options = options, enabled = state.job !is StudioJob.Running, onChange = viewModel::updateOptions)
+
         SectionCard(title = stringResource(R.string.studio_sessions_title)) {
             if (!state.loading && state.sessions.isEmpty()) {
                 Text(
@@ -100,6 +109,7 @@ fun StudioScreen(
                     session = session,
                     job = state.job?.takeIf { it.sessionStart == session.record.startWallMs },
                     busy = state.job is StudioJob.Running,
+                    fps = options.fps,
                     onStart = { action -> viewModel.start(session.record, action) },
                     onCancel = viewModel::cancel,
                 )
@@ -108,6 +118,51 @@ fun StudioScreen(
     }
 }
 
+
+/** One set of options for every output; read when a job starts, so a change mid-run waits for the next. */
+@Composable
+private fun OptionsCard(
+    options: StudioOptions,
+    enabled: Boolean,
+    onChange: ((StudioOptions) -> StudioOptions) -> Unit,
+) {
+    SectionCard(title = stringResource(R.string.studio_options_title)) {
+        Text(stringResource(R.string.studio_options_fps), style = MaterialTheme.typography.labelLarge)
+        SegmentedChoice(
+            options = StudioOptions.FPS_CHOICES,
+            selected = options.fps,
+            onSelect = { fps -> onChange { it.copy(fps = fps) } },
+            enabled = enabled,
+        ) { it.toString() }
+        Text(stringResource(R.string.studio_options_resolution), style = MaterialTheme.typography.labelLarge)
+        SegmentedChoice(
+            options = Resolution.entries,
+            selected = options.resolution,
+            onSelect = { r -> onChange { it.copy(resolution = r) } },
+            enabled = enabled,
+        ) { if (it == Resolution.FHD) "1080p" else "4K" }
+        Text(stringResource(R.string.studio_options_aspect), style = MaterialTheme.typography.labelLarge)
+        SegmentedChoice(
+            options = Aspect.entries,
+            selected = options.aspect,
+            onSelect = { a -> onChange { it.copy(aspect = a) } },
+            enabled = enabled,
+        ) { if (it == Aspect.ORIGINAL) stringResource(R.string.studio_options_aspect_original) else "${it.w}:${it.h}" }
+        SwitchRow(
+            title = stringResource(R.string.studio_options_deflicker),
+            description = stringResource(R.string.studio_options_deflicker_summary),
+            checked = options.deflicker,
+            onCheckedChange = { on -> onChange { it.copy(deflicker = on) } },
+            enabled = enabled,
+        )
+        SwitchRow(
+            title = stringResource(R.string.studio_options_join_mute),
+            checked = options.joinWithoutAudio,
+            onCheckedChange = { on -> onChange { it.copy(joinWithoutAudio = on) } },
+            enabled = enabled,
+        )
+    }
+}
 
 /** Keeps the screen on while a job runs, and stops the job when the screen goes away. */
 @Composable
@@ -125,6 +180,7 @@ private fun SessionRow(
     session: StudioSession,
     job: StudioJob?,
     busy: Boolean,
+    fps: Int,
     onStart: (StudioAction) -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -140,6 +196,9 @@ private fun SessionRow(
     val found = session.photos?.let { pluralStringResource(R.plurals.studio_session_found, it, it) }
         ?: stringResource(R.string.studio_session_found_unknown)
     val videos = session.videos?.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.studio_session_videos, it, it) }
+    val length = session.photos?.takeIf { it > 0 }?.let { n ->
+        stringResource(R.string.studio_session_length, OutputPlan.durationMs(n, fps) / 1000.0)
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -147,7 +206,7 @@ private fun SessionRow(
     ) {
         Text(text = period, style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = listOfNotNull(shots, found, videos).joinToString(" · "),
+            text = listOfNotNull(shots, found, videos, length).joinToString(" · "),
             style = MaterialTheme.typography.bodySmall,
             color = LocalContentColor.current.copy(alpha = 0.75f),
         )

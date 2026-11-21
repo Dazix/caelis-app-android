@@ -45,6 +45,20 @@
     <string name="studio_folder_change">Ordner ändern</string>
     <string name="studio_sessions_title">Fertige Serien</string>
     <string name="studio_sessions_empty">Noch kein fertiger Zeitraffer.</string>
+    <string name="studio_options_title">Ausgabe</string>
+    <string name="studio_options_fps">Bilder pro Sekunde</string>
+    <string name="studio_options_resolution">Auflösung</string>
+    <string name="studio_options_aspect">Seitenverhältnis</string>
+    <string name="studio_options_aspect_original">Voll</string>
+    <string name="studio_options_deflicker">Flackern ausgleichen</string>
+    <string name="studio_options_deflicker_summary">Glättet Helligkeitssprünge zwischen Fotos, ein dunkler werdender Sonnenuntergang bleibt</string>
+    <string name="studio_options_join_mute">Videos ohne Ton verbinden</string>
+    <string name="studio_session_length">≈ %1$.1f s Video</string>
+    <string name="home_studio_shortcut_summary">Video, Sternspuren oder Mittelwert im Studio</string>
+    <plurals name="home_studio_shortcut">
+        <item quantity="one">Aus %1$d Aufnahme erstellen</item>
+        <item quantity="other">Aus %1$d Aufnahmen erstellen</item>
+    </plurals>
     <string name="studio_session_found_unknown">Fotos nicht gesucht</string>
     <string name="studio_action_trails">Sternspuren</string>
     <string name="studio_action_average">Mittelwert</string>

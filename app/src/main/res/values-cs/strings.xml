@@ -45,6 +45,22 @@
     <string name="studio_folder_change">Změnit složku</string>
     <string name="studio_sessions_title">Hotové série</string>
     <string name="studio_sessions_empty">Zatím žádný dokončený timelapse.</string>
+    <string name="studio_options_title">Výstup</string>
+    <string name="studio_options_fps">Snímků za sekundu</string>
+    <string name="studio_options_resolution">Rozlišení</string>
+    <string name="studio_options_aspect">Poměr stran</string>
+    <string name="studio_options_aspect_original">Celý</string>
+    <string name="studio_options_deflicker">Vyrovnat blikání</string>
+    <string name="studio_options_deflicker_summary">Srovná skoky jasu mezi fotkami, stmívání při západu zůstane</string>
+    <string name="studio_options_join_mute">Spojit videa bez zvuku</string>
+    <string name="studio_session_length">≈ %1$.1f s videa</string>
+    <string name="home_studio_shortcut_summary">Video, stopy hvězd nebo průměr ve Studiu</string>
+    <plurals name="home_studio_shortcut">
+        <item quantity="one">Vytvořit z %1$d snímku</item>
+        <item quantity="few">Vytvořit z %1$d snímků</item>
+        <item quantity="many">Vytvořit z %1$d snímku</item>
+        <item quantity="other">Vytvořit z %1$d snímků</item>
+    </plurals>
     <string name="studio_session_found_unknown">fotky nehledány</string>
     <string name="studio_action_trails">Stopy hvězd</string>
     <string name="studio_action_average">Průměr</string>
