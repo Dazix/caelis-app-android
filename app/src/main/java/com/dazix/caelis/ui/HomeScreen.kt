@@ -48,6 +48,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dazix.caelis.R
+import com.dazix.caelis.domain.RampCurve
 import com.dazix.caelis.domain.SessionSnapshot
 import com.dazix.caelis.domain.SessionState
 import com.dazix.caelis.domain.StopReason
@@ -76,6 +77,7 @@ fun HomeScreen(
     onOpenAccessibilitySettings: () -> Unit,
     onOpenOverlaySettings: () -> Unit,
     onDismissServiceMessage: () -> Unit,
+    launchMode: String? = null,
 ) {
     val active = snapshot.state is SessionState.Running ||
         snapshot.state is SessionState.WaitingToStart ||
@@ -198,6 +200,7 @@ fun HomeScreen(
             handheldBeforeStart = handheldBeforeStart,
             holdHandheldLine = holdHandheldLine,
             onShowSettings = showSettings,
+            launchMode = launchMode,
         )
 
         if (serviceUnavailable) {
@@ -236,12 +239,22 @@ fun HomeScreen(
         }
 
         SectionCard(title = stringResource(R.string.nav_app_picker)) {
-            Text(
-                text = setup.targetLabel
-                    ?: setup.targetPackage
-                    ?: stringResource(R.string.home_target_app_none),
-                style = MaterialTheme.typography.bodyLarge,
-            )
+            // The package under the name, as in the mode editor: two apps can share a label.
+            Column {
+                Text(
+                    text = setup.targetLabel
+                        ?: setup.targetPackage
+                        ?: stringResource(R.string.home_target_app_none),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                if (setup.targetLabel != null && setup.targetPackage != null) {
+                    Text(
+                        text = setup.targetPackage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = LocalContentColor.current.copy(alpha = 0.75f),
+                    )
+                }
+            }
             StatusChip(
                 text = stringResource(
                     if (calibrated) R.string.home_calibration_ok else R.string.home_calibration_missing
@@ -322,8 +335,10 @@ fun HomeScreen(
             HorizontalDivider()
             ListRowButton(
                 title = stringResource(R.string.nav_ramp),
-                subtitle = if (setup.rampEnabled) {
-                    stringResource(R.string.home_planned_interval, durationText(setup.rampEndMs))
+                // The same line as under the planned interval; only the end interval read as the
+                // whole series' interval.
+                subtitle = if (setup.rampSpec() != null) {
+                    plannedLine(setup)
                 } else {
                     stringResource(R.string.nav_ramp_summary)
                 },
@@ -360,6 +375,7 @@ private fun SessionStatusCard(
     handheldBeforeStart: HandheldState,
     holdHandheldLine: Boolean,
     onShowSettings: () -> Unit,
+    launchMode: String?,
 ) {
     val now by rememberElapsedRealtime(active)
     val state = snapshot.state
@@ -399,6 +415,14 @@ private fun SessionStatusCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = LocalContentColor.current.copy(alpha = 0.8f),
                 )
+                // Only when the session will switch the camera; "leave the app as it is" says nothing.
+                if (launchMode != null) {
+                    Text(
+                        text = stringResource(R.string.home_launch_mode, launchMode),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = LocalContentColor.current.copy(alpha = 0.8f),
+                    )
+                }
             }
         }
 
@@ -478,9 +502,24 @@ private fun heroText(
                 stringResource(R.string.home_next_shot_in, durationText(remaining))
             }
         }
-        else -> durationText(setup.intervalMs) to
-            stringResource(R.string.home_planned_interval, durationText(setup.intervalMs))
+        else -> durationText(setup.intervalMs) to plannedLine(setup)
     }
+}
+
+/**
+ * The line under the planned interval. With a ramp the series does not stay at the number above it,
+ * so the line says where it goes and how; only a ramp the session will actually run counts
+ * ([SetupUiState.rampSpec] is null for one switched off or not filled in).
+ */
+@Composable
+private fun plannedLine(setup: SetupUiState): String {
+    val start = durationText(setup.intervalMs)
+    val ramp = setup.rampSpec() ?: return stringResource(R.string.home_planned_interval, start)
+    val text = when (ramp.curve) {
+        RampCurve.LINEAR -> R.string.home_planned_ramp_linear
+        RampCurve.EXPONENTIAL -> R.string.home_planned_ramp_exponential
+    }
+    return stringResource(text, start, durationText(ramp.endIntervalMs))
 }
 
 /** How far the wait for the next shot has run, 0 at the last shot and 1 at the next one. */

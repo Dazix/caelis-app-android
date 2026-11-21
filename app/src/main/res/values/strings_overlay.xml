@@ -39,6 +39,23 @@
     <string name="ovl_calib_saved_area">Shutter area saved.</string>
     <string name="ovl_calib_timed_out">Calibration cancelled — nothing was tapped.</string>
     <string name="ovl_calib_unavailable">Calibration could not be started. Try again from the app.</string>
+    <string name="ovl_rec_instruction">Switch %1$s to the mode as you normally would: tap and swipe. Every step is passed on to the app and written down. Then press Done.</string>
+    <string name="ovl_rec_instruction_not_launched">%1$s could not be opened. Switch to it yourself, then tap and swipe into the mode and press Done.</string>
+    <string name="ovl_rec_cancel">Cancel</string>
+    <string name="ovl_rec_undo">Remove last</string>
+    <string name="ovl_rec_done">Done</string>
+    <string name="ovl_rec_timed_out">Recording cancelled after 10 minutes.</string>
+    <string name="ovl_rec_service_lost">The accessibility service is off or a session is running; recording stopped.</string>
+    <string name="ovl_rec_too_many_steps">That is as many steps as a mode can have. Press Done.</string>
+    <string name="ovl_rec_shutter_refused">That is the shutter. It is not recorded, or every session would start with a photo.</string>
+    <string name="ovl_rec_gesture_failed">The step did not reach the camera app and was not recorded. Try it again.</string>
+    <string name="ovl_rec_undone">Last step removed. Put the camera back as it was before it.</string>
+    <string name="ovl_rec_nothing">Nothing recorded yet. Tap or swipe in the camera app first.</string>
+    <string name="ovl_rec_saved">Mode recorded. Name it and save it.</string>
+    <plurals name="ovl_rec_steps">
+        <item quantity="one">Recording: %d step</item>
+        <item quantity="other">Recording: %d steps</item>
+    </plurals>
 
     <string name="ovl_notif_channel_name">Running session</string>
     <string name="ovl_notif_channel_desc">Shots taken and the countdown to the next shot while a session runs.</string>

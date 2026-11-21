@@ -18,6 +18,9 @@ import com.dazix.caelis.domain.SessionConfig
 import com.dazix.caelis.domain.StopConditions
 import com.dazix.caelis.domain.TapTarget
 import com.dazix.caelis.domain.TriggerMode
+import com.dazix.caelis.domain.cameramode.CustomCameraMode
+import com.dazix.caelis.domain.cameramode.CustomModeCodec
+import com.dazix.caelis.domain.cameramode.CustomModeKey
 import com.dazix.caelis.domain.nightsky.ConstellationArtOpacity
 import com.dazix.caelis.domain.nightsky.NightVisionActivationMode
 import com.dazix.caelis.domain.nightsky.NightVisionTheme
@@ -55,6 +58,9 @@ class SettingsStore(context: Context) {
     val lastConfig: Flow<SessionConfig?> = preferences.map { SettingsMapping.readConfig(it) }
 
     val advanced: Flow<AdvancedSettings> = preferences.map { SettingsMapping.readAdvanced(it) }
+
+    /** The camera modes the user recorded, for every app. */
+    val customModes: Flow<List<CustomCameraMode>> = preferences.map { SettingsMapping.readCustomModes(it) }
 
     val sunArKeepScreenOn: Flow<Boolean> = preferences.map { SettingsMapping.readSunArKeepScreenOn(it) }
 
@@ -343,6 +349,18 @@ class SettingsStore(context: Context) {
     suspend fun saveAdvanced(settings: AdvancedSettings) {
         dataStore.edit { SettingsMapping.writeAdvanced(it, settings) }
     }
+
+    /** One read, for the session: a failed read is "no such mode", which the session reports. */
+    suspend fun customMode(id: String): CustomCameraMode? =
+        runCatching { SettingsMapping.readCustomModes(currentPreferences()).firstOrNull { it.id == id } }.getOrNull()
+
+    suspend fun saveCustomMode(mode: CustomCameraMode) {
+        dataStore.edit { SettingsMapping.putCustomMode(it, mode) }
+    }
+
+    suspend fun deleteCustomMode(id: String) {
+        dataStore.edit { SettingsMapping.deleteCustomMode(it, id) }
+    }
 }
 
 /**
@@ -429,6 +447,7 @@ internal object SettingsMapping {
     private val NIGHT_SKY_ASTERISM_NAMES_VISIBLE = booleanPreferencesKey("night_sky_asterism_names_visible")
     private val NIGHT_SKY_SENSOR_TRACKING = booleanPreferencesKey("night_sky_sensor_tracking")
     private val NIGHT_SKY_SEARCH_HISTORY = stringPreferencesKey("night_sky_search_history")
+    private val CUSTOM_CAMERA_MODES = stringPreferencesKey("custom_camera_modes")
     private val NIGHT_VISION_THEME_KEY = stringPreferencesKey("night_vision_theme")
     private val NIGHT_VISION_MODE_KEY = stringPreferencesKey("night_vision_mode")
     private val CUSTOM_START_MINUTES_KEY = intPreferencesKey("custom_start_minutes")
@@ -601,6 +620,29 @@ internal object SettingsMapping {
             handheldWarning = prefs[ADV_HANDHELD_WARNING] ?: AdvancedSettings().handheldWarning,
         )
     }.getOrElse { AdvancedSettings() }
+
+    fun readCustomModes(prefs: Preferences): List<CustomCameraMode> =
+        runCatching { CustomModeCodec.decode(prefs[CUSTOM_CAMERA_MODES]) }.getOrElse { emptyList() }
+
+    /** Adds [mode], or replaces the one with its id in place, so the list keeps its order. */
+    fun putCustomMode(prefs: MutablePreferences, mode: CustomCameraMode) {
+        val current = readCustomModes(prefs)
+        val updated = if (current.any { it.id == mode.id }) {
+            current.map { if (it.id == mode.id) mode else it }
+        } else {
+            current + mode
+        }
+        prefs[CUSTOM_CAMERA_MODES] = CustomModeCodec.encode(updated)
+    }
+
+    /**
+     * Removes the mode and, when the session was set to launch into it, that setting too: a pointer
+     * to a deleted mode would only turn into a warning at the next start.
+     */
+    fun deleteCustomMode(prefs: MutablePreferences, id: String) {
+        prefs[CUSTOM_CAMERA_MODES] = CustomModeCodec.encode(readCustomModes(prefs).filterNot { it.id == id })
+        if (CustomModeKey.idOf(prefs[ADV_LAUNCH_CAMERA_MODE]) == id) prefs.remove(ADV_LAUNCH_CAMERA_MODE)
+    }
 
     private fun readRamp(prefs: Preferences): RampSpec? {
         val curve = RampCurve.entries.firstOrNull { it.name == prefs[RAMP_CURVE] } ?: return null

@@ -43,6 +43,25 @@
     <string name="ovl_calib_saved_area">Zapisano obszar spustu.</string>
     <string name="ovl_calib_timed_out">Kalibracja anulowana — nic nie zostało stuknięte.</string>
     <string name="ovl_calib_unavailable">Nie udało się rozpocząć kalibracji. Spróbuj ponownie z aplikacji.</string>
+    <string name="ovl_rec_instruction">Przełącz %1$s na tryb jak zwykle: stuknięciami i przesunięciami. Każdy krok trafia do aplikacji i jest zapisywany. Potem naciśnij Gotowe.</string>
+    <string name="ovl_rec_instruction_not_launched">Nie udało się otworzyć %1$s. Przełącz się do niej sam, wyklikaj tryb i naciśnij Gotowe.</string>
+    <string name="ovl_rec_cancel">Anuluj</string>
+    <string name="ovl_rec_undo">Usuń ostatni</string>
+    <string name="ovl_rec_done">Gotowe</string>
+    <string name="ovl_rec_timed_out">Nagrywanie anulowano po 10 minutach.</string>
+    <string name="ovl_rec_service_lost">Usługa ułatwień dostępu jest wyłączona lub trwa sesja; nagrywanie zakończone.</string>
+    <string name="ovl_rec_too_many_steps">Tryb nie może mieć więcej kroków. Naciśnij Gotowe.</string>
+    <string name="ovl_rec_shutter_refused">To jest spust. Nie zostanie zapisany, inaczej każda sesja zaczynałaby się zdjęciem.</string>
+    <string name="ovl_rec_gesture_failed">Krok nie dotarł do aplikacji aparatu i nie został zapisany. Spróbuj ponownie.</string>
+    <string name="ovl_rec_undone">Usunięto ostatni krok. Przywróć aparat do stanu sprzed niego.</string>
+    <string name="ovl_rec_nothing">Nic jeszcze nie nagrano. Najpierw stuknij lub przesuń w aplikacji aparatu.</string>
+    <string name="ovl_rec_saved">Tryb nagrany. Nazwij go i zapisz.</string>
+    <plurals name="ovl_rec_steps">
+        <item quantity="one">Nagrywanie: %d krok</item>
+        <item quantity="few">Nagrywanie: %d kroki</item>
+        <item quantity="many">Nagrywanie: %d kroków</item>
+        <item quantity="other">Nagrywanie: %d kroku</item>
+    </plurals>
 
     <string name="ovl_notif_channel_name">Trwająca sesja</string>
     <string name="ovl_notif_channel_desc">Wykonane zdjęcia i odliczanie do następnego zdjęcia, gdy sesja trwa.</string>

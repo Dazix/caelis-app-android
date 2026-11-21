@@ -388,6 +388,20 @@ Each of these was found by review or on the device and is now covered by a test.
   switch to the carousel, and the Czech photo chip is "Fotka". The mode is switched as soon as the
   camera app is in front after Start, retried while its chip is not drawn yet, and the first shot
   waits `MODE_SETTLE_MS` (5 s) after a switch: Astro engages only some time after Night Sight.
+- **A recorded mode is replayed by element first, by position only on the same screen, and never
+  past a step it cannot find.** `launchCameraMode = "custom:<id>"` replays a `CustomCameraMode`
+  (`domain/cameramode/`) the user recorded over the camera app (`ModeRecordingService`, which passes
+  every gesture on through `ShutterDispatcher.passThrough` and refuses the shutter).
+  `StepMatchPolicy`: view id + label, then a unique view id, then a unique label on an element with
+  no other view id (the minibar icon again); a recorded element that is not found is waited for and
+  then stops the replay with a warning, never replaced by its position. Swipes and taps without an
+  element replay by position, only when the natural screen size equals the recording's. The proof
+  (`ModeProofPolicy`, the one element that became selected) skips the replay when the mode is on
+  already. The recording surface goes untouchable *before* it reads the camera's screen or passes a
+  gesture on, and waits 100 ms for that to take effect: while it takes touches it covers the camera,
+  whose window the accessibility service then does not get (no element, no proof), and a gesture
+  dispatched at once landed on the surface itself. What it stores (positions, view ids, labels) is named in the accessibility disclosure,
+  the service description and the privacy policy; keep all three true when it changes.
 - **A tap is not a shot.** With verification armed, `shotsTaken` moves only when verification resolves
   (`PendingShot` / `VerifyStep.resolvesShot`). A retry never increments it; a shot whose every gesture
   the platform refused is not counted at all; a shot is never counted twice on stop/pause.

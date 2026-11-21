@@ -107,6 +107,29 @@ class DisplayGeometry(
         if (heightPx > 0) y / heightPx else 0f,
     )
 
+    /** Natural-space fractions of a current-screen pixel. */
+    fun naturalPoint(x: Float, y: Float): PointF {
+        val screen = fractionsOf(x, y)
+        val natural = toNatural(TapTarget(screen.x, screen.y))
+        return PointF(natural.xFraction, natural.yFraction)
+    }
+
+    /** Natural-space fractions (left, top, right, bottom) of a current-screen pixel rect. */
+    fun naturalBounds(rect: Rect): RectF {
+        val centre = fractionsOf(rect.exactCenterX(), rect.exactCenterY())
+        val size = fractionsOf(rect.width().toFloat(), rect.height().toFloat())
+        val natural = toNatural(TapTarget(centre.x, centre.y, size.x, size.y))
+        return RectF(
+            natural.xFraction - natural.widthFraction / 2f,
+            natural.yFraction - natural.heightFraction / 2f,
+            natural.xFraction + natural.widthFraction / 2f,
+            natural.yFraction + natural.heightFraction / 2f,
+        )
+    }
+
+    /** The current-screen pixel of a natural-space point, inside the screen. */
+    fun screenPoint(naturalX: Float, naturalY: Float): PointF = pointFor(TapTarget(naturalX, naturalY))
+
     /** Keeps a gesture coordinate strictly inside the display, which the gesture API requires. */
     fun clampToScreen(point: PointF): PointF = PointF(
         point.x.coerceIn(0f, (widthPx - 1).coerceAtLeast(0).toFloat()),

@@ -29,15 +29,20 @@ import com.dazix.caelis.domain.StopConditions
 import com.dazix.caelis.domain.StopReason
 import com.dazix.caelis.domain.TapTarget
 import com.dazix.caelis.domain.TriggerMode
+import com.dazix.caelis.domain.cameramode.CustomCameraMode
+import com.dazix.caelis.domain.cameramode.CustomModeKey
 import com.dazix.caelis.domain.nightsky.NightVisionActivationMode
 import com.dazix.caelis.domain.nightsky.NightVisionTheme
 import com.dazix.caelis.overlay.CalibrationOverlay
+import com.dazix.caelis.overlay.ModeRecordingOverlay
 import com.dazix.caelis.overlay.OverlayOptions
 import com.dazix.caelis.overlay.OverlaySettings
 import com.dazix.caelis.service.CameraProfiles
 import com.dazix.caelis.service.DisplayGeometry
+import com.dazix.caelis.service.CustomReplayResult
 import com.dazix.caelis.service.ShutterAccessibilityService
 import java.time.LocalTime
+import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -66,7 +71,10 @@ import com.dazix.caelis.domain.solar.GeoLocation
 import kotlin.math.roundToLong
 
 /** The app is a single activity; this is the whole navigation model. */
-enum class Screen { HOME, SETUP, RAMP, ADVANCED, ONBOARDING, APP_PICKER, SUN_AR, NIGHT_SKY_AR, SETTINGS, OFFLINE_TERRAIN }
+enum class Screen {
+    HOME, SETUP, RAMP, ADVANCED, ONBOARDING, APP_PICKER, SUN_AR, NIGHT_SKY_AR, SETTINGS, OFFLINE_TERRAIN,
+    CUSTOM_MODES, CUSTOM_MODE_EDIT,
+}
 
 enum class ModeChoice { TIMELAPSE, PERIODIC_TAP }
 
@@ -810,6 +818,74 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearApp() {
         updateSetup { it.copy(targetPackage = null, targetLabel = null) }
+    }
+
+    // ---- recorded camera modes -----------------------------------------------------------------
+
+    /** Every recorded mode, for every app. */
+    val customModes: StateFlow<List<CustomCameraMode>> =
+        settings.customModes.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    private val modeDraftState = MutableStateFlow(CustomModeDraft())
+    val modeDraft: StateFlow<CustomModeDraft> = modeDraftState.asStateFlow()
+
+    /** The recording already taken over, so a recreated screen does not apply it twice. */
+    private var lastRecordingSerial = ModeRecordingOverlay.lastResult.value?.serial ?: 0L
+
+    // Here and not in the first init block: the state it writes is declared above, after that block.
+    init {
+        viewModelScope.launch { observeModeRecordings() }
+    }
+
+    fun openCustomModes() = navigate(Screen.CUSTOM_MODES)
+
+    /** A new mode starts in the session's camera app, which is what the user is setting up. */
+    fun newCustomMode() {
+        val setup = setupState.value
+        modeDraftState.value = CustomModeDraft(packageName = setup.targetPackage, appLabel = setup.targetLabel)
+        navigate(Screen.CUSTOM_MODE_EDIT)
+    }
+
+    fun editCustomMode(mode: CustomCameraMode) {
+        modeDraftState.value = CustomModeDraft.from(mode)
+        navigate(Screen.CUSTOM_MODE_EDIT)
+    }
+
+    fun updateModeDraft(transform: (CustomModeDraft) -> CustomModeDraft) {
+        modeDraftState.value = transform(modeDraftState.value)
+    }
+
+    fun saveModeDraft() {
+        val mode = modeDraftState.value.toMode({ UUID.randomUUID().toString().replace("-", "").take(12) }, System.currentTimeMillis())
+            ?: return
+        viewModelScope.launch { settings.saveCustomMode(mode) }
+        back()
+    }
+
+    fun deleteModeDraft() {
+        val id = modeDraftState.value.id
+        if (id != null) {
+            // The store clears a launch mode pointing at it; the screen's copy has to follow.
+            if (CustomModeKey.idOf(advancedState.value.launchCameraMode) == id) {
+                advancedState.value = advancedState.value.copy(launchCameraMode = null)
+            }
+            viewModelScope.launch { settings.deleteCustomMode(id) }
+        }
+        back()
+    }
+
+    /** Replays the draft as it stands now; [onResult] gets null when the app did not open. */
+    fun testModeDraft(onResult: (CustomReplayResult?) -> Unit): Boolean {
+        val mode = modeDraftState.value.toMode({ "test" }, System.currentTimeMillis()) ?: return false
+        return ShutterAccessibilityService.testCustomMode(mode, onResult)
+    }
+
+    private suspend fun observeModeRecordings() {
+        ModeRecordingOverlay.lastResult.collect { recording ->
+            if (recording == null || recording.serial <= lastRecordingSerial) return@collect
+            lastRecordingSerial = recording.serial
+            modeDraftState.value = modeDraftState.value.withRecording(recording)
+        }
     }
 
     fun setAppQuery(query: String) {

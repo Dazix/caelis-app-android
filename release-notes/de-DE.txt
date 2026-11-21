@@ -1,13 +1,8 @@
 # "What's new" on Google Play. See en-US.txt for the rules; the lines here translate it line by line.
 Virtuelle Orte für Sonne und Nachthimmel
-Gipfelnamen sitzen auf dem Gipfel, tagsüber dunkel hinterlegt
-Jetzt auf Slowakisch, Polnisch und Deutsch
-Warnung bei Zeitraffer aus der Hand
-Läuft auf Android 11 und 12
-Nachthimmel: Namen überlappen nicht, leicht antippbar, Asterismen im Sterndetail
-Obere Leiste meidet die Kameraaussparung
-Kompasswarnung nur bei echtem Fehler
-Sonne: Kamera schneller, Horizont stabil
-Geländedaten: Gesamtgröße, Limit oder auf Anfrage; Höhe über Gelände
-Nacht und Astro: nächstes Foto ein Intervall nach dem fertigen; Modus gleich beim Start
-Pixel Camera: Nachtmodus öffnet keine Einstellungen mehr
+Jetzt auf Slowakisch, Polnisch und Deutsch und auf Android 11 und 12
+Nachthimmel: Namen überlappen nicht, leicht antippbar; Gipfelnamen auf dem Gipfel
+Sonne: Kamera schneller, Horizont stabil, weniger falsche Kompasswarnungen
+Gelände: Downloadgröße und Limit; Höhe über Gelände
+Zeitraffer: Warnung aus der Hand; Nacht und Astro warten auf das fertige Foto
+Eigene Kameramodi: Tipp- und Wischschritte in jeder Kamera-App aufnehmen
