@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
+import androidx.core.content.edit
 import com.dazix.caelis.domain.studio.FrameFile
 
 /**
@@ -33,7 +34,8 @@ class FrameSource(context: Context) {
         prefs.getString(KEY_TREE, null)?.let(Uri::parse)?.takeIf { it != tree }?.let { old ->
             runCatching { resolver.releasePersistableUriPermission(old, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
         }
-        prefs.edit().putString(KEY_TREE, tree.toString()).commit()
+        // Synchronous: grant() runs on IO and the load right after it reads the folder back.
+        prefs.edit(commit = true) { putString(KEY_TREE, tree.toString()) }
     }
 
     /** The folder's name as the provider shows it ("Camera"), for the screen. */

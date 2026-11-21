@@ -1,6 +1,7 @@
 package com.dazix.caelis.data
 
 import android.content.Context
+import androidx.core.content.edit
 import com.dazix.caelis.domain.studio.SessionHistory
 import com.dazix.caelis.domain.studio.SessionHistoryCodec
 import com.dazix.caelis.domain.studio.SessionRecord
@@ -18,7 +19,7 @@ class SessionHistoryStore(context: Context) {
     fun all(): List<SessionRecord> = SessionHistoryCodec.decode(prefs.getString(KEY, null))
 
     fun add(record: SessionRecord) {
-        prefs.edit().putString(KEY, SessionHistoryCodec.encode(SessionHistory.add(all(), record))).commit()
+        prefs.edit(commit = true) { putString(KEY, SessionHistoryCodec.encode(SessionHistory.add(all(), record))) }
     }
 
     private companion object {

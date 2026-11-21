@@ -1,6 +1,7 @@
 package com.dazix.caelis.data.studio
 
 import android.content.Context
+import androidx.core.content.edit
 import com.dazix.caelis.domain.studio.Aspect
 import com.dazix.caelis.domain.studio.Resolution
 import com.dazix.caelis.domain.studio.StudioOptions
@@ -22,13 +23,13 @@ class StudioSettingsStore(context: Context) {
     }
 
     fun save(options: StudioOptions) {
-        prefs.edit()
-            .putInt(KEY_FPS, options.fps)
-            .putString(KEY_RESOLUTION, options.resolution.name)
-            .putString(KEY_ASPECT, options.aspect.name)
-            .putBoolean(KEY_DEFLICKER, options.deflicker)
-            .putBoolean(KEY_JOIN_MUTE, options.joinWithoutAudio)
-            .apply()
+        prefs.edit {
+            putInt(KEY_FPS, options.fps)
+            putString(KEY_RESOLUTION, options.resolution.name)
+            putString(KEY_ASPECT, options.aspect.name)
+            putBoolean(KEY_DEFLICKER, options.deflicker)
+            putBoolean(KEY_JOIN_MUTE, options.joinWithoutAudio)
+        }
     }
 
     private inline fun <reified E : Enum<E>> enumOr(name: String?, fallback: E): E =
