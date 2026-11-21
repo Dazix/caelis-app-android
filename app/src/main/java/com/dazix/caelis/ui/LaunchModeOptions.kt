@@ -65,4 +65,27 @@ internal object LaunchModeOptions {
      */
     fun customFor(modes: List<CustomCameraMode>, packageName: String?): List<CustomCameraMode> =
         if (packageName == null) emptyList() else modes.filter { it.packageName == packageName }
+
+    /** The mode a session for [targetPackage] will switch to, as the home screen names it. */
+    sealed interface InForce {
+        data class Builtin(val key: String) : InForce
+        data class Recorded(val mode: CustomCameraMode) : InForce
+    }
+
+    /**
+     * The mode in force for [targetPackage], by the same rules as [selected]: null when the camera
+     * is left as it is, and also when the stored mode would not apply to this app, so the home
+     * screen never names a mode the session will not switch to.
+     */
+    fun inForce(
+        settings: AdvancedSettings,
+        profile: CameraProfile,
+        targetPackage: String?,
+        allCustom: List<CustomCameraMode>,
+    ): InForce? {
+        val custom = customFor(allCustom, targetPackage)
+        val key = selected(settings, profile, targetPackage != null, custom) ?: return null
+        val id = CustomModeKey.idOf(key) ?: return InForce.Builtin(key)
+        return custom.firstOrNull { it.id == id }?.let { InForce.Recorded(it) }
+    }
 }

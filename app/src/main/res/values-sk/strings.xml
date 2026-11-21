@@ -90,6 +90,9 @@
     <string name="home_starts_in">Začne o %1$s</string>
     <string name="home_current_interval">Aktuálny interval %1$s</string>
     <string name="home_planned_interval">Nastavený interval %1$s</string>
+    <string name="home_planned_ramp_linear">Interval %1$s → %2$s, lineárne</string>
+    <string name="home_planned_ramp_exponential">Interval %1$s → %2$s, exponenciálne</string>
+    <string name="home_launch_mode">Režim fotoaparátu: %1$s</string>
     <string name="home_target_app_none">Fotoaplikácia ešte nie je vybraná</string>
     <string name="home_calibrate">Kalibrovať pozíciu spúšte</string>
     <string name="home_recalibrate">Znova kalibrovať pozíciu spúšte</string>

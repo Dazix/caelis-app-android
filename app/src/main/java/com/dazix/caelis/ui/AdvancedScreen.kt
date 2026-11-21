@@ -183,6 +183,12 @@ private val MODE_LABELS: Map<String, Int> = mapOf(
 )
 
 @Composable
+internal fun launchModeName(mode: LaunchModeOptions.InForce): String = when (mode) {
+    is LaunchModeOptions.InForce.Builtin -> modeLabel(mode.key)
+    is LaunchModeOptions.InForce.Recorded -> mode.mode.name
+}
+
+@Composable
 private fun modeLabel(key: String): String =
     MODE_LABELS[key]?.let { stringResource(it) }
         ?: key.replaceFirstChar { it.uppercase() }

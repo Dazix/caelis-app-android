@@ -107,6 +107,23 @@ class LaunchModeOptionsTest {
     }
 
     @Test
+    fun `the home screen names only the mode a session will switch to`() {
+        val cam = "com.google.android.GoogleCamera"
+        val all = listOf(pixelNight, otherNight)
+        fun inForce(key: String?, pkg: String? = cam, profile: CameraProfile = pixel) =
+            LaunchModeOptions.inForce(AdvancedSettings(launchCameraMode = key), profile, pkg, all)
+
+        assertNull(inForce(null))
+        assertEquals(LaunchModeOptions.InForce.Builtin(CameraProfile.MODE_NIGHT), inForce(CameraProfile.MODE_NIGHT))
+        assertEquals(LaunchModeOptions.InForce.Recorded(pixelNight), inForce(pixelNight.key))
+        // Another app's recording, a deleted one, a key the profile cannot reach, or no app: nothing.
+        assertNull(inForce(otherNight.key))
+        assertNull(inForce("custom:gone"))
+        assertNull(inForce(CameraProfile.MODE_ASTRO, profile = generic))
+        assertNull(inForce(CameraProfile.MODE_NIGHT, pkg = null))
+    }
+
+    @Test
     fun `without a chosen app every extra is off`() {
         val settings = AdvancedSettings(launchCameraMode = CameraProfile.MODE_PHOTO)
 

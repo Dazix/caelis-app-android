@@ -90,6 +90,9 @@
     <string name="home_starts_in">Začne za %1$s</string>
     <string name="home_current_interval">Aktuální interval %1$s</string>
     <string name="home_planned_interval">Nastavený interval %1$s</string>
+    <string name="home_planned_ramp_linear">Interval %1$s → %2$s, lineárně</string>
+    <string name="home_planned_ramp_exponential">Interval %1$s → %2$s, exponenciálně</string>
+    <string name="home_launch_mode">Režim fotoaparátu: %1$s</string>
     <string name="home_target_app_none">Fotoaplikace ještě není vybraná</string>
     <string name="home_calibrate">Kalibrovat pozici spouště</string>
     <string name="home_recalibrate">Znovu kalibrovat pozici spouště</string>

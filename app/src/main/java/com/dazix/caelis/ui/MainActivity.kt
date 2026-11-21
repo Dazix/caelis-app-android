@@ -413,6 +413,8 @@ private fun CaelisScreen(
             onOpenAccessibilitySettings = openAccessibilitySettings,
             onOpenOverlaySettings = { context.launchSafely(Permissions.overlaySettings(context)) },
             onDismissServiceMessage = viewModel::dismissServiceMessage,
+            launchMode = LaunchModeOptions.inForce(advanced, profile, setup.targetPackage, customModes)
+                ?.let { launchModeName(it) },
         )
 
         Screen.SETUP -> SetupScreen(

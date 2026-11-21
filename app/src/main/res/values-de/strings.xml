@@ -86,6 +86,9 @@
     <string name="home_starts_in">Start in %1$s</string>
     <string name="home_current_interval">Aktuelles Intervall %1$s</string>
     <string name="home_planned_interval">Geplantes Intervall %1$s</string>
+    <string name="home_planned_ramp_linear">Intervall %1$s → %2$s, linear</string>
+    <string name="home_planned_ramp_exponential">Intervall %1$s → %2$s, exponentiell</string>
+    <string name="home_launch_mode">Kameramodus: %1$s</string>
     <string name="home_target_app_none">Noch keine Kamera-App gewählt</string>
     <string name="home_calibrate">Auslöserposition kalibrieren</string>
     <string name="home_recalibrate">Auslöserposition neu kalibrieren</string>
