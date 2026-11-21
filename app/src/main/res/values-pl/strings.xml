@@ -48,6 +48,17 @@
     <string name="studio_session_found_unknown">zdjęcia nie wyszukane</string>
     <string name="studio_action_trails">Ślady gwiazd</string>
     <string name="studio_action_average">Średnia</string>
+    <string name="studio_action_video">Film</string>
+    <string name="studio_action_growing">Rosnące ślady</string>
+    <string name="studio_action_join">Połącz filmy</string>
+    <string name="studio_job_preparing">Wczytuję zdjęcia…</string>
+    <string name="studio_job_done_video">Zapisano w Filmy/Caelis</string>
+    <plurals name="studio_session_videos">
+        <item quantity="one">%1$d film</item>
+        <item quantity="few">%1$d filmy</item>
+        <item quantity="many">%1$d filmów</item>
+        <item quantity="other">%1$d filmu</item>
+    </plurals>
     <string name="studio_job_progress">Składam zdjęcia… %1$d %%</string>
     <string name="studio_job_cancel">Anuluj</string>
     <string name="studio_job_done">Zapisano w Obrazy/Caelis</string>

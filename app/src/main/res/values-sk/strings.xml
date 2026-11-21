@@ -48,6 +48,17 @@
     <string name="studio_session_found_unknown">fotky nehľadané</string>
     <string name="studio_action_trails">Stopy hviezd</string>
     <string name="studio_action_average">Priemer</string>
+    <string name="studio_action_video">Video</string>
+    <string name="studio_action_growing">Rastúce stopy</string>
+    <string name="studio_action_join">Spojiť videá</string>
+    <string name="studio_job_preparing">Načítavam fotky…</string>
+    <string name="studio_job_done_video">Uložené do Filmy/Caelis</string>
+    <plurals name="studio_session_videos">
+        <item quantity="one">%1$d video</item>
+        <item quantity="few">%1$d videá</item>
+        <item quantity="many">%1$d videa</item>
+        <item quantity="other">%1$d videí</item>
+    </plurals>
     <string name="studio_job_progress">Skladám fotky… %1$d %%</string>
     <string name="studio_job_cancel">Zrušiť</string>
     <string name="studio_job_done">Uložené do Obrázky/Caelis</string>

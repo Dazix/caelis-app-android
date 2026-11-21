@@ -6,13 +6,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalView
-import com.dazix.caelis.media.StackKind
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -99,13 +100,14 @@ fun StudioScreen(
                     session = session,
                     job = state.job?.takeIf { it.sessionStart == session.record.startWallMs },
                     busy = state.job is StudioJob.Running,
-                    onStack = { kind -> viewModel.stack(session.record, kind) },
+                    onStart = { action -> viewModel.start(session.record, action) },
                     onCancel = viewModel::cancel,
                 )
             }
         }
     }
 }
+
 
 /** Keeps the screen on while a job runs, and stops the job when the screen goes away. */
 @Composable
@@ -123,7 +125,7 @@ private fun SessionRow(
     session: StudioSession,
     job: StudioJob?,
     busy: Boolean,
-    onStack: (StackKind) -> Unit,
+    onStart: (StudioAction) -> Unit,
     onCancel: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -137,6 +139,7 @@ private fun SessionRow(
     val shots = pluralStringResource(R.plurals.studio_session_shots, r.shots, r.shots)
     val found = session.photos?.let { pluralStringResource(R.plurals.studio_session_found, it, it) }
         ?: stringResource(R.string.studio_session_found_unknown)
+    val videos = session.videos?.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.studio_session_videos, it, it) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -144,20 +147,21 @@ private fun SessionRow(
     ) {
         Text(text = period, style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = "$shots · $found",
+            text = listOfNotNull(shots, found, videos).joinToString(" · "),
             style = MaterialTheme.typography.bodySmall,
             color = LocalContentColor.current.copy(alpha = 0.75f),
         )
         when (job) {
             is StudioJob.Running -> {
-                val fraction = if (job.total > 0) job.done.toFloat() / job.total else 0f
                 Text(
-                    text = stringResource(R.string.studio_job_progress, (fraction * 100).toInt()),
+                    text = job.percent?.let { stringResource(R.string.studio_job_progress, it) }
+                        ?: stringResource(R.string.studio_job_preparing),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 8.dp),
                 )
-                if (job.total > 0) {
-                    LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
+                val percent = job.percent
+                if (percent != null) {
+                    LinearProgressIndicator(progress = { percent / 100f }, modifier = Modifier.fillMaxWidth())
                 } else {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
@@ -166,8 +170,9 @@ private fun SessionRow(
                 }
             }
             is StudioJob.Done -> {
+                val video = job.action.outputMime.startsWith("video/")
                 Text(
-                    text = stringResource(R.string.studio_job_done),
+                    text = stringResource(if (video) R.string.studio_job_done_video else R.string.studio_job_done),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 8.dp),
                 )
@@ -180,7 +185,7 @@ private fun SessionRow(
                 TextButton(
                     onClick = {
                         val open = Intent(Intent.ACTION_VIEW)
-                            .setDataAndType(job.uri, "image/jpeg")
+                            .setDataAndType(job.uri, job.action.outputMime)
                             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         runCatching { context.startActivity(open) }
                     },
@@ -197,19 +202,36 @@ private fun SessionRow(
             )
             null -> Unit
         }
-        if (job !is StudioJob.Running && (session.photos ?: 0) > 0) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                OutlinedButton(
-                    onClick = { onStack(StackKind.LIGHTEN) },
-                    enabled = !busy,
-                    modifier = Modifier.heightIn(min = 48.dp),
-                ) { Text(stringResource(R.string.studio_action_trails)) }
-                OutlinedButton(
-                    onClick = { onStack(StackKind.MEAN) },
-                    enabled = !busy,
-                    modifier = Modifier.heightIn(min = 48.dp),
-                ) { Text(stringResource(R.string.studio_action_average)) }
+        if (job !is StudioJob.Running) {
+            val actions = buildList {
+                if ((session.photos ?: 0) > 0) {
+                    add(StudioAction.VIDEO)
+                    add(StudioAction.TRAILS)
+                    add(StudioAction.GROWING_TRAILS)
+                    add(StudioAction.AVERAGE)
+                }
+                if ((session.videos ?: 0) > 0) add(StudioAction.JOIN)
+            }
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 8.dp),
+            ) {
+                actions.forEach { action ->
+                    OutlinedButton(
+                        onClick = { onStart(action) },
+                        enabled = !busy,
+                        modifier = Modifier.heightIn(min = 48.dp),
+                    ) { Text(stringResource(action.label())) }
+                }
             }
         }
     }
+}
+
+private fun StudioAction.label(): Int = when (this) {
+    StudioAction.VIDEO -> R.string.studio_action_video
+    StudioAction.TRAILS -> R.string.studio_action_trails
+    StudioAction.GROWING_TRAILS -> R.string.studio_action_growing
+    StudioAction.AVERAGE -> R.string.studio_action_average
+    StudioAction.JOIN -> R.string.studio_action_join
 }

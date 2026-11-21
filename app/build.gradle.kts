@@ -170,6 +170,10 @@ dependencies {
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.media3.transformer)
+    implementation(libs.androidx.media3.effect)
+    implementation(libs.androidx.media3.common)
+    implementation(libs.androidx.exifinterface)
     implementation(libs.flatbuffers.java)
     implementation(libs.filament.android)
     // Consent-gated at runtime (ArCoreSessionController); `optional` in the manifest.

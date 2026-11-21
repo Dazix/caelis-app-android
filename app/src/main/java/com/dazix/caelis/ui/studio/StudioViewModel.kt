@@ -8,11 +8,14 @@ import androidx.lifecycle.viewModelScope
 import com.dazix.caelis.data.SessionHistoryStore
 import com.dazix.caelis.data.studio.FrameSource
 import com.dazix.caelis.domain.studio.MediaKind
+import com.dazix.caelis.domain.studio.Resolution
 import com.dazix.caelis.domain.studio.SessionFrameWindow
 import com.dazix.caelis.domain.studio.SessionRecord
 import com.dazix.caelis.media.StackKind
 import com.dazix.caelis.media.StackResult
 import com.dazix.caelis.media.StackRunner
+import com.dazix.caelis.media.TimelapseOptions
+import com.dazix.caelis.media.VideoEncoder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,21 +25,34 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/** A finished session and how many of its frames the granted folder holds (null: no folder to look in). */
-data class StudioSession(val record: SessionRecord, val photos: Int?)
+/**
+ * A finished session and how many of its photos and videos the granted folder holds (null: no
+ * folder to look in).
+ */
+data class StudioSession(val record: SessionRecord, val photos: Int?, val videos: Int?)
+
+enum class StudioAction(val outputMime: String) {
+    VIDEO("video/mp4"),
+    TRAILS("image/jpeg"),
+    GROWING_TRAILS("video/mp4"),
+    AVERAGE("image/jpeg"),
+    JOIN("video/mp4"),
+}
 
 /** What Studio is building, or built last, for one session (keyed by its start). */
 sealed interface StudioJob {
     val sessionStart: Long
-    val kind: StackKind
+    val action: StudioAction
 
-    data class Running(override val sessionStart: Long, override val kind: StackKind, val done: Int, val total: Int) : StudioJob
-    data class Done(override val sessionStart: Long, override val kind: StackKind, val uri: Uri, val skipped: Int) : StudioJob
-    data class Failed(override val sessionStart: Long, override val kind: StackKind) : StudioJob
+    /** [percent] null: not measurable yet (reading the frames before the export starts). */
+    data class Running(override val sessionStart: Long, override val action: StudioAction, val percent: Int?) : StudioJob
+    data class Done(override val sessionStart: Long, override val action: StudioAction, val uri: Uri, val skipped: Int) : StudioJob
+    data class Failed(override val sessionStart: Long, override val action: StudioAction) : StudioJob
 }
 
 data class StudioUiState(
@@ -55,6 +71,7 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
     private val frames = FrameSource(application)
     private val history = SessionHistoryStore(application)
     private val stacker = StackRunner(application)
+    private val encoder = VideoEncoder(application)
 
     private val state = MutableStateFlow(StudioUiState())
     val uiState: StateFlow<StudioUiState> = state.asStateFlow()
@@ -82,35 +99,67 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    /** One job at a time: decoding two stacks at once would only halve the speed of each and double the memory. */
-    fun stack(session: SessionRecord, kind: StackKind) {
+    /** One job at a time: two encodes at once would only halve the speed of each and double the memory. */
+    fun start(session: SessionRecord, action: StudioAction) {
         if (running?.isActive == true) return
+        val key = session.startWallMs
+        fun progress(percent: Int?) = state.update { it.copy(job = StudioJob.Running(key, action, percent)) }
         running = viewModelScope.launch {
-            state.update { it.copy(job = StudioJob.Running(session.startWallMs, kind, 0, 0)) }
-            val outcome = runCatching {
-                withContext(Dispatchers.Default) {
-                    val tree = frames.treeUri() ?: return@withContext StackResult.NoFrames
-                    val picked = SessionFrameWindow.select(frames.list(tree), session.startWallMs, session.endWallMs, MediaKind.IMAGES)
-                    stacker.run(
-                        frames = picked.map { frames.documentUri(tree, it) },
-                        kind = kind,
-                        name = outputName(session, kind),
-                    ) { done, total ->
-                        state.update { it.copy(job = StudioJob.Running(session.startWallMs, kind, done, total)) }
-                    }
-                }
-            }
+            progress(null)
+            val outcome = runCatching { withContext(Dispatchers.Default) { perform(session, action, ::progress) } }
             val error = outcome.exceptionOrNull()
             if (error is CancellationException) {
                 state.update { it.copy(job = null) }
                 throw error
             }
-            if (error != null) Log.w(TAG, "stack failed: ${error.javaClass.simpleName}")
-            val job = when (val result = outcome.getOrNull()) {
-                is StackResult.Done -> StudioJob.Done(session.startWallMs, kind, result.uri, result.rejected)
-                else -> StudioJob.Failed(session.startWallMs, kind)
-            }
+            // The class only: an export exception's message can carry the file's URI.
+            if (error != null) Log.w(TAG, "$action failed: ${error.javaClass.simpleName}")
+            val job = outcome.getOrNull()?.let { (uri, skipped) -> StudioJob.Done(key, action, uri, skipped) }
+                ?: StudioJob.Failed(key, action)
             state.update { it.copy(job = job) }
+        }
+    }
+
+    /** The output and how many inputs were left out, or null when there was nothing to build from. */
+    private suspend fun perform(session: SessionRecord, action: StudioAction, progress: (Int?) -> Unit): Pair<Uri, Int>? {
+        val tree = frames.treeUri() ?: return null
+        val listed = frames.list(tree)
+        val kind = if (action == StudioAction.JOIN) MediaKind.VIDEOS else MediaKind.IMAGES
+        val picked = SessionFrameWindow.select(listed, session.startWallMs, session.endWallMs, kind)
+            .map { frames.documentUri(tree, it) }
+        if (picked.isEmpty()) return null
+        val name = outputName(session, action)
+        val percent = { done: Int, total: Int -> progress(if (total > 0) done * 100 / total else null) }
+        return when (action) {
+            StudioAction.TRAILS, StudioAction.AVERAGE -> {
+                val kindOf = if (action == StudioAction.TRAILS) StackKind.LIGHTEN else StackKind.MEAN
+                when (val r = stacker.run(picked, kindOf, name, percent)) {
+                    is StackResult.Done -> r.uri to r.rejected
+                    StackResult.NoFrames -> null
+                }
+            }
+            StudioAction.VIDEO -> encoder.timelapse(picked, TimelapseOptions(), name) { progress(it) } to 0
+            StudioAction.JOIN -> encoder.join(picked, removeAudio = false, name) { progress(it) } to 0
+            StudioAction.GROWING_TRAILS -> {
+                val dir = File(getApplication<Application>().cacheDir, "studio_snapshots").apply {
+                    deleteRecursively()
+                    mkdirs()
+                }
+                try {
+                    // Half of the work is the stack, half the encode.
+                    val snaps = stacker.growingSnapshots(
+                        picked, GROWING_EVERY, Resolution.FHD.longEdge, Resolution.FHD.shortEdge, dir,
+                    ) { done, total -> progress(done * 50 / total) } ?: return null
+                    if (snaps.isEmpty()) return null
+                    encoder.timelapse(
+                        snaps.map(Uri::fromFile),
+                        TimelapseOptions(deflicker = false),
+                        name,
+                    ) { progress(50 + it / 2) } to 0
+                } finally {
+                    dir.deleteRecursively()
+                }
+            }
         }
     }
 
@@ -121,16 +170,15 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
         state.update { s -> if (s.job is StudioJob.Running) s.copy(job = null) else s }
     }
 
-    private fun outputName(session: SessionRecord, kind: StackKind): String {
+    private fun outputName(session: SessionRecord, action: StudioAction): String {
         val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ROOT).format(Date(session.startWallMs))
-        val what = if (kind == StackKind.LIGHTEN) "STARTRAILS" else "AVERAGE"
-        return "CAELIS_${what}_$stamp"
+        return "CAELIS_${action.name}_$stamp"
     }
 
     private fun load(): StudioUiState {
         val records = history.all()
         val tree = frames.treeUri()
-            ?: return StudioUiState(loading = false, sessions = records.map { StudioSession(it, null) })
+            ?: return StudioUiState(loading = false, sessions = records.map { StudioSession(it, null, null) })
         val listed = runCatching { frames.list(tree) }.getOrNull()
         return StudioUiState(
             loading = false,
@@ -141,6 +189,7 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
                 StudioSession(
                     record = r,
                     photos = listed?.let { SessionFrameWindow.select(it, r.startWallMs, r.endWallMs, MediaKind.IMAGES).size },
+                    videos = listed?.let { SessionFrameWindow.select(it, r.startWallMs, r.endWallMs, MediaKind.VIDEOS).size },
                 )
             },
         )
@@ -148,5 +197,8 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
 
     private companion object {
         const val TAG = "CaelisStudio"
+
+        /** A growing star trail adds one video frame per this many photos. */
+        const val GROWING_EVERY = 1
     }
 }

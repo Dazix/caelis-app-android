@@ -3,7 +3,7 @@ package com.dazix.caelis.media
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
-import android.media.ExifInterface
+import androidx.exifinterface.media.ExifInterface
 import android.net.Uri
 import android.provider.MediaStore
 import java.io.File
@@ -16,6 +16,7 @@ import java.io.File
 object OutputWriter {
 
     const val PICTURES_DIR = "Pictures/Caelis"
+    const val MOVIES_DIR = "Movies/Caelis"
 
     /** JPEG at 95: the result of a few hundred frames should not lose what the stack gained. */
     private const val JPEG_QUALITY = 95
