@@ -61,7 +61,7 @@ class OutputPlanTest {
 
     @Test
     fun noFramesNoSize() {
-        assertTrue(FrameSizes.check(emptyList()).size == null)
+        assertTrue(FrameSizes.check(emptyList<Size>()).size == null)
     }
 
     @Test

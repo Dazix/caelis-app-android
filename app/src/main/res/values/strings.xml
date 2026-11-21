@@ -46,6 +46,17 @@
     <string name="studio_sessions_title">Finished sessions</string>
     <string name="studio_sessions_empty">No finished time-lapse yet.</string>
     <string name="studio_session_found_unknown">photos not searched</string>
+    <string name="studio_action_trails">Star trails</string>
+    <string name="studio_action_average">Average</string>
+    <string name="studio_job_progress">Stacking photos… %1$d %%</string>
+    <string name="studio_job_cancel">Cancel</string>
+    <string name="studio_job_done">Saved to Pictures/Caelis</string>
+    <string name="studio_job_open">Open</string>
+    <string name="studio_job_failed">Stacking failed. Check that the photos are still in the folder.</string>
+    <plurals name="studio_job_skipped">
+        <item quantity="one">%1$d photo of another size left out</item>
+        <item quantity="other">%1$d photos of another size left out</item>
+    </plurals>
     <plurals name="studio_session_shots">
         <item quantity="one">%1$d shot</item>
         <item quantity="other">%1$d shots</item>

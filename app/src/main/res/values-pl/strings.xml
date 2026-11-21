@@ -46,6 +46,19 @@
     <string name="studio_sessions_title">Ukończone serie</string>
     <string name="studio_sessions_empty">Brak ukończonego timelapse.</string>
     <string name="studio_session_found_unknown">zdjęcia nie wyszukane</string>
+    <string name="studio_action_trails">Ślady gwiazd</string>
+    <string name="studio_action_average">Średnia</string>
+    <string name="studio_job_progress">Składam zdjęcia… %1$d %%</string>
+    <string name="studio_job_cancel">Anuluj</string>
+    <string name="studio_job_done">Zapisano w Obrazy/Caelis</string>
+    <string name="studio_job_open">Otwórz</string>
+    <string name="studio_job_failed">Składanie nie powiodło się. Sprawdź, czy zdjęcia są w folderze.</string>
+    <plurals name="studio_job_skipped">
+        <item quantity="one">Pominięto %1$d zdjęcie innego rozmiaru</item>
+        <item quantity="few">Pominięto %1$d zdjęcia innego rozmiaru</item>
+        <item quantity="many">Pominięto %1$d zdjęć innego rozmiaru</item>
+        <item quantity="other">Pominięto %1$d zdjęcia innego rozmiaru</item>
+    </plurals>
     <plurals name="studio_session_shots">
         <item quantity="one">%1$d zdjęcie</item>
         <item quantity="few">%1$d zdjęcia</item>

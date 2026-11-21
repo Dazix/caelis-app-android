@@ -46,6 +46,17 @@
     <string name="studio_sessions_title">Fertige Serien</string>
     <string name="studio_sessions_empty">Noch kein fertiger Zeitraffer.</string>
     <string name="studio_session_found_unknown">Fotos nicht gesucht</string>
+    <string name="studio_action_trails">Sternspuren</string>
+    <string name="studio_action_average">Mittelwert</string>
+    <string name="studio_job_progress">Fotos werden gestapelt… %1$d %%</string>
+    <string name="studio_job_cancel">Abbrechen</string>
+    <string name="studio_job_done">In Bilder/Caelis gespeichert</string>
+    <string name="studio_job_open">Öffnen</string>
+    <string name="studio_job_failed">Stapeln fehlgeschlagen. Prüfe, ob die Fotos noch im Ordner sind.</string>
+    <plurals name="studio_job_skipped">
+        <item quantity="one">%1$d Foto anderer Größe ausgelassen</item>
+        <item quantity="other">%1$d Fotos anderer Größe ausgelassen</item>
+    </plurals>
     <plurals name="studio_session_shots">
         <item quantity="one">%1$d Aufnahme</item>
         <item quantity="other">%1$d Aufnahmen</item>

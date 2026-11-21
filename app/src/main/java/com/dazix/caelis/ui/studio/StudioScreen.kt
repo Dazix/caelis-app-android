@@ -1,9 +1,18 @@
 package com.dazix.caelis.ui.studio
 
+import android.content.Intent
 import android.text.format.DateUtils
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalView
+import com.dazix.caelis.media.StackKind
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -39,6 +48,7 @@ fun StudioScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.refresh() }
+    JobLifecycle(viewModel, running = state.job is StudioJob.Running)
     val pickFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
         viewModel.onFolderPicked(it)
     }
@@ -85,14 +95,37 @@ fun StudioScreen(
             }
             state.sessions.forEachIndexed { i, session ->
                 if (i > 0) HorizontalDivider()
-                SessionRow(session)
+                SessionRow(
+                    session = session,
+                    job = state.job?.takeIf { it.sessionStart == session.record.startWallMs },
+                    busy = state.job is StudioJob.Running,
+                    onStack = { kind -> viewModel.stack(session.record, kind) },
+                    onCancel = viewModel::cancel,
+                )
             }
         }
     }
 }
 
+/** Keeps the screen on while a job runs, and stops the job when the screen goes away. */
 @Composable
-private fun SessionRow(session: StudioSession) {
+private fun JobLifecycle(viewModel: StudioViewModel, running: Boolean) {
+    val view = LocalView.current
+    DisposableEffect(running) {
+        view.keepScreenOn = running
+        onDispose { view.keepScreenOn = false }
+    }
+    DisposableEffect(Unit) { onDispose { viewModel.cancel() } }
+}
+
+@Composable
+private fun SessionRow(
+    session: StudioSession,
+    job: StudioJob?,
+    busy: Boolean,
+    onStack: (StackKind) -> Unit,
+    onCancel: () -> Unit,
+) {
     val context = LocalContext.current
     val r = session.record
     val period = DateUtils.formatDateRange(
@@ -115,5 +148,68 @@ private fun SessionRow(session: StudioSession) {
             style = MaterialTheme.typography.bodySmall,
             color = LocalContentColor.current.copy(alpha = 0.75f),
         )
+        when (job) {
+            is StudioJob.Running -> {
+                val fraction = if (job.total > 0) job.done.toFloat() / job.total else 0f
+                Text(
+                    text = stringResource(R.string.studio_job_progress, (fraction * 100).toInt()),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                if (job.total > 0) {
+                    LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
+                } else {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+                TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.studio_job_cancel))
+                }
+            }
+            is StudioJob.Done -> {
+                Text(
+                    text = stringResource(R.string.studio_job_done),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                if (job.skipped > 0) {
+                    Text(
+                        text = pluralStringResource(R.plurals.studio_job_skipped, job.skipped, job.skipped),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                TextButton(
+                    onClick = {
+                        val open = Intent(Intent.ACTION_VIEW)
+                            .setDataAndType(job.uri, "image/jpeg")
+                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        runCatching { context.startActivity(open) }
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) {
+                    Text(stringResource(R.string.studio_job_open))
+                }
+            }
+            is StudioJob.Failed -> Text(
+                text = stringResource(R.string.studio_job_failed),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+            null -> Unit
+        }
+        if (job !is StudioJob.Running && (session.photos ?: 0) > 0) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                OutlinedButton(
+                    onClick = { onStack(StackKind.LIGHTEN) },
+                    enabled = !busy,
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) { Text(stringResource(R.string.studio_action_trails)) }
+                OutlinedButton(
+                    onClick = { onStack(StackKind.MEAN) },
+                    enabled = !busy,
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) { Text(stringResource(R.string.studio_action_average)) }
+            }
+        }
     }
 }

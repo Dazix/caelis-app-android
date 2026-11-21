@@ -46,6 +46,19 @@
     <string name="studio_sessions_title">Hotové série</string>
     <string name="studio_sessions_empty">Zatiaľ žiadny dokončený timelapse.</string>
     <string name="studio_session_found_unknown">fotky nehľadané</string>
+    <string name="studio_action_trails">Stopy hviezd</string>
+    <string name="studio_action_average">Priemer</string>
+    <string name="studio_job_progress">Skladám fotky… %1$d %%</string>
+    <string name="studio_job_cancel">Zrušiť</string>
+    <string name="studio_job_done">Uložené do Obrázky/Caelis</string>
+    <string name="studio_job_open">Otvoriť</string>
+    <string name="studio_job_failed">Zloženie sa nepodarilo. Skontrolujte, že fotky sú v priečinku.</string>
+    <plurals name="studio_job_skipped">
+        <item quantity="one">%1$d fotka inej veľkosti vynechaná</item>
+        <item quantity="few">%1$d fotky inej veľkosti vynechané</item>
+        <item quantity="many">%1$d fotky inej veľkosti vynechanej</item>
+        <item quantity="other">%1$d fotiek inej veľkosti vynechaných</item>
+    </plurals>
     <plurals name="studio_session_shots">
         <item quantity="one">%1$d snímka</item>
         <item quantity="few">%1$d snímky</item>

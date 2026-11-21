@@ -66,16 +66,42 @@ object OutputPlan {
     private fun even(v: Int) = maxOf(2, v and 1.inv())
 }
 
-/** The frames of one output must share a size; a session where the mode changed mid-way has several. */
+/**
+ * The frames of one output must share a shape; a session where the mode changed mid-way has several.
+ * Generic so a caller can fold the EXIF orientation into the shape: same pixel size, other rotation
+ * is a different layout of the pixels and cannot be stacked with the rest.
+ */
 object FrameSizes {
 
-    data class Check(val size: Size?, val rejected: List<Int>)
+    data class Check<T>(val size: T?, val rejected: List<Int>)
 
-    fun check(sizes: List<Size>): Check {
-        if (sizes.isEmpty()) return Check(null, emptyList())
-        val counts = LinkedHashMap<Size, Int>()
-        sizes.forEach { counts[it] = (counts[it] ?: 0) + 1 }
+    /** The most common shape (the first one on a tie) and the indices of every other frame. */
+    fun <T> check(shapes: List<T>): Check<T> {
+        if (shapes.isEmpty()) return Check(null, emptyList())
+        val counts = LinkedHashMap<T, Int>()
+        shapes.forEach { counts[it] = (counts[it] ?: 0) + 1 }
         val dominant = counts.maxByOrNull { it.value }!!.key
-        return Check(dominant, sizes.indices.filter { sizes[it] != dominant })
+        return Check(dominant, shapes.indices.filter { shapes[it] != dominant })
+    }
+}
+
+/** A frame as stacking sees it: pixel size as stored, plus the EXIF orientation that turns it upright. */
+data class FrameShape(val width: Int, val height: Int, val orientation: Int)
+
+/**
+ * How many rows a stacking pass takes at once. The accumulator lives on the Java heap (256 MB on a
+ * Pixel 7 Pro), the decoded frames do not; a band is as tall as the [budgetBytes] allow, and every
+ * extra band costs one more decode of every frame, so the fewest bands that fit win.
+ */
+object BandPlan {
+
+    fun bandRows(width: Int, height: Int, accumulatorBytesPerPixel: Int, budgetBytes: Long): Int {
+        require(width > 0 && height > 0 && accumulatorBytesPerPixel > 0)
+        val rowBytes = width.toLong() * accumulatorBytesPerPixel
+        val fit = (budgetBytes / rowBytes).coerceAtLeast(1L)
+        if (fit >= height) return height
+        val bands = ((height + fit - 1) / fit).toInt()
+        // Even split: three bands of 1000 rows decode the same as 1400 + 1400 + 200, and use less memory.
+        return (height + bands - 1) / bands
     }
 }
