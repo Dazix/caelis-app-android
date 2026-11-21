@@ -33,6 +33,31 @@
     <string name="nav_ramp_summary">Postupná zmena intervalu počas série</string>
     <string name="nav_advanced">Pokročilé doplnky</string>
     <string name="nav_advanced_summary">Nepovinné úpravy pre konkrétne telefóny a fotoaplikácie</string>
+    <string name="nav_studio">Štúdio</string>
+    <string name="nav_studio_summary">Videá a stopy hviezd z hotových sérií</string>
+    <string name="studio_title">Štúdio</string>
+    <string name="studio_subtitle">Výsledok z fotiek jednej série</string>
+    <string name="studio_folder_title">Priečinok s fotkami</string>
+    <string name="studio_folder_missing">Vyberte priečinok, kam fotoaparát ukladá fotky, zvyčajne DCIM/Camera. CAELIS z neho len číta.</string>
+    <string name="studio_folder_unnamed">Priečinok vybraný</string>
+    <string name="studio_folder_error">Priečinok nemožno prečítať. Vyberte ho znova.</string>
+    <string name="studio_folder_choose">Vybrať priečinok</string>
+    <string name="studio_folder_change">Zmeniť priečinok</string>
+    <string name="studio_sessions_title">Hotové série</string>
+    <string name="studio_sessions_empty">Zatiaľ žiadny dokončený timelapse.</string>
+    <string name="studio_session_found_unknown">fotky nehľadané</string>
+    <plurals name="studio_session_shots">
+        <item quantity="one">%1$d snímka</item>
+        <item quantity="few">%1$d snímky</item>
+        <item quantity="many">%1$d snímky</item>
+        <item quantity="other">%1$d snímok</item>
+    </plurals>
+    <plurals name="studio_session_found">
+        <item quantity="one">nájdená %1$d fotka</item>
+        <item quantity="few">nájdené %1$d fotky</item>
+        <item quantity="many">nájdenej %1$d fotky</item>
+        <item quantity="other">nájdených %1$d fotiek</item>
+    </plurals>
     <string name="nav_permissions">Oprávnenia</string>
     <string name="nav_permissions_summary">Všetko, čo aplikácia potrebuje, aby mohla stláčať spúšť</string>
     <string name="nav_app_picker">Fotoaplikácia</string>

@@ -33,6 +33,27 @@
     <string name="nav_ramp_summary">Intervall während der Sitzung langsam ändern</string>
     <string name="nav_advanced">Erweiterte Extras</string>
     <string name="nav_advanced_summary">Optionale Anpassungen für Gerät und Kamera-App</string>
+    <string name="nav_studio">Studio</string>
+    <string name="nav_studio_summary">Videos und Sternspuren aus fertigen Serien</string>
+    <string name="studio_title">Studio</string>
+    <string name="studio_subtitle">Ein Ergebnis aus den Fotos einer Serie</string>
+    <string name="studio_folder_title">Fotoordner</string>
+    <string name="studio_folder_missing">Wähle den Ordner, in dem die Kamera-App Fotos speichert, meist DCIM/Camera. CAELIS liest ihn nur.</string>
+    <string name="studio_folder_unnamed">Ordner gewählt</string>
+    <string name="studio_folder_error">Der Ordner kann nicht gelesen werden. Wähle ihn erneut.</string>
+    <string name="studio_folder_choose">Ordner wählen</string>
+    <string name="studio_folder_change">Ordner ändern</string>
+    <string name="studio_sessions_title">Fertige Serien</string>
+    <string name="studio_sessions_empty">Noch kein fertiger Zeitraffer.</string>
+    <string name="studio_session_found_unknown">Fotos nicht gesucht</string>
+    <plurals name="studio_session_shots">
+        <item quantity="one">%1$d Aufnahme</item>
+        <item quantity="other">%1$d Aufnahmen</item>
+    </plurals>
+    <plurals name="studio_session_found">
+        <item quantity="one">%1$d Foto gefunden</item>
+        <item quantity="other">%1$d Fotos gefunden</item>
+    </plurals>
     <string name="nav_permissions">Berechtigungen</string>
     <string name="nav_permissions_summary">Alles, was die App zum Antippen für Sie braucht</string>
     <string name="nav_app_picker">Kamera-App</string>

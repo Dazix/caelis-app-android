@@ -33,6 +33,31 @@
     <string name="nav_ramp_summary">Powolna zmiana interwału w trakcie sesji</string>
     <string name="nav_advanced">Dodatki zaawansowane</string>
     <string name="nav_advanced_summary">Opcjonalne poprawki dla urządzenia i aplikacji aparatu</string>
+    <string name="nav_studio">Studio</string>
+    <string name="nav_studio_summary">Filmy i ślady gwiazd z ukończonych serii</string>
+    <string name="studio_title">Studio</string>
+    <string name="studio_subtitle">Efekt ze zdjęć jednej serii</string>
+    <string name="studio_folder_title">Folder ze zdjęciami</string>
+    <string name="studio_folder_missing">Wybierz folder, w którym aparat zapisuje zdjęcia, zwykle DCIM/Camera. CAELIS tylko go odczytuje.</string>
+    <string name="studio_folder_unnamed">Folder wybrany</string>
+    <string name="studio_folder_error">Nie można odczytać folderu. Wybierz go ponownie.</string>
+    <string name="studio_folder_choose">Wybierz folder</string>
+    <string name="studio_folder_change">Zmień folder</string>
+    <string name="studio_sessions_title">Ukończone serie</string>
+    <string name="studio_sessions_empty">Brak ukończonego timelapse.</string>
+    <string name="studio_session_found_unknown">zdjęcia nie wyszukane</string>
+    <plurals name="studio_session_shots">
+        <item quantity="one">%1$d zdjęcie</item>
+        <item quantity="few">%1$d zdjęcia</item>
+        <item quantity="many">%1$d zdjęć</item>
+        <item quantity="other">%1$d zdjęcia</item>
+    </plurals>
+    <plurals name="studio_session_found">
+        <item quantity="one">znaleziono %1$d zdjęcie</item>
+        <item quantity="few">znaleziono %1$d zdjęcia</item>
+        <item quantity="many">znaleziono %1$d zdjęć</item>
+        <item quantity="other">znaleziono %1$d zdjęcia</item>
+    </plurals>
     <string name="nav_permissions">Uprawnienia</string>
     <string name="nav_permissions_summary">Wszystko, czego aplikacja potrzebuje, by stukać za Ciebie</string>
     <string name="nav_app_picker">Aplikacja aparatu</string>

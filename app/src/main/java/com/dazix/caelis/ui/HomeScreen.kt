@@ -339,6 +339,13 @@ fun HomeScreen(
             )
             HorizontalDivider()
             ListRowButton(
+                title = stringResource(R.string.nav_studio),
+                subtitle = stringResource(R.string.nav_studio_summary),
+                icon = AppIcons.AutoAwesome,
+                onClick = { onNavigate(Screen.STUDIO) },
+            )
+            HorizontalDivider()
+            ListRowButton(
                 title = stringResource(R.string.nav_permissions),
                 subtitle = stringResource(R.string.nav_permissions_summary),
                 icon = AppIcons.Permissions,

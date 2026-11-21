@@ -33,6 +33,27 @@
     <string name="nav_ramp_summary">Slowly change the interval during the session</string>
     <string name="nav_advanced">Advanced extras</string>
     <string name="nav_advanced_summary">Optional device and camera-app specific tweaks</string>
+    <string name="nav_studio">Studio</string>
+    <string name="nav_studio_summary">Videos and star trails from finished sessions</string>
+    <string name="studio_title">Studio</string>
+    <string name="studio_subtitle">Build a result from a session\'s photos</string>
+    <string name="studio_folder_title">Photo folder</string>
+    <string name="studio_folder_missing">Choose the folder your camera app saves photos to, usually DCIM/Camera. CAELIS only reads it.</string>
+    <string name="studio_folder_unnamed">Folder chosen</string>
+    <string name="studio_folder_error">The folder cannot be read. Choose it again.</string>
+    <string name="studio_folder_choose">Choose folder</string>
+    <string name="studio_folder_change">Change folder</string>
+    <string name="studio_sessions_title">Finished sessions</string>
+    <string name="studio_sessions_empty">No finished time-lapse yet.</string>
+    <string name="studio_session_found_unknown">photos not searched</string>
+    <plurals name="studio_session_shots">
+        <item quantity="one">%1$d shot</item>
+        <item quantity="other">%1$d shots</item>
+    </plurals>
+    <plurals name="studio_session_found">
+        <item quantity="one">%1$d photo found</item>
+        <item quantity="other">%1$d photos found</item>
+    </plurals>
     <string name="nav_permissions">Permissions</string>
     <string name="nav_permissions_summary">Everything the app needs in order to tap for you</string>
     <string name="nav_app_picker">Camera app</string>

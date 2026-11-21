@@ -66,7 +66,7 @@ import com.dazix.caelis.domain.solar.GeoLocation
 import kotlin.math.roundToLong
 
 /** The app is a single activity; this is the whole navigation model. */
-enum class Screen { HOME, SETUP, RAMP, ADVANCED, ONBOARDING, APP_PICKER, SUN_AR, NIGHT_SKY_AR, SETTINGS, OFFLINE_TERRAIN }
+enum class Screen { HOME, SETUP, RAMP, ADVANCED, ONBOARDING, APP_PICKER, SUN_AR, NIGHT_SKY_AR, SETTINGS, OFFLINE_TERRAIN, STUDIO }
 
 enum class ModeChoice { TIMELAPSE, PERIODIC_TAP }
 
