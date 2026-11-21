@@ -355,7 +355,6 @@ private fun CaelisScreen(
 ) {
     val context = LocalContext.current
     val customModes by viewModel.customModes.collectAsStateWithLifecycle()
-    val cameraApps by viewModel.cameraApps.collectAsStateWithLifecycle()
     val modeDraft by viewModel.modeDraft.collectAsStateWithLifecycle()
     val horizonSettings by viewModel.horizonSettings.collectAsStateWithLifecycle()
     val arCoreSettings by viewModel.arCoreSettings.collectAsStateWithLifecycle()
@@ -456,7 +455,6 @@ private fun CaelisScreen(
 
         Screen.CUSTOM_MODE_EDIT -> CustomModeEditScreen(
             draft = modeDraft,
-            cameraApps = cameraApps,
             onChange = viewModel::updateModeDraft,
             onRecord = startModeRecording,
             onTest = testModeDraft,

@@ -26,6 +26,7 @@ data class CustomModeDraft(
     /** The app the steps were recorded in. */
     val recordedIn: String? = null,
     val createdAtMs: Long = 0L,
+    val intervalAfterCapture: Boolean = false,
 ) {
     val stepsFromAnotherApp: Boolean
         get() = steps.isNotEmpty() && recordedIn != null && recordedIn != packageName
@@ -52,6 +53,7 @@ data class CustomModeDraft(
             naturalWidthPx = naturalWidthPx,
             naturalHeightPx = naturalHeightPx,
             createdAtMs = if (createdAtMs > 0) createdAtMs else nowMs,
+            intervalAfterCapture = intervalAfterCapture,
         )
     }
 
@@ -80,6 +82,7 @@ data class CustomModeDraft(
             naturalHeightPx = mode.naturalHeightPx,
             recordedIn = mode.packageName,
             createdAtMs = mode.createdAtMs,
+            intervalAfterCapture = mode.intervalAfterCapture,
         )
     }
 }

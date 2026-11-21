@@ -89,8 +89,21 @@ class LaunchModeOptionsTest {
 
     @Test
     fun `choosing a recorded mode leaves the interval setting as the user had it`() {
-        assertEquals(false, LaunchModeOptions.choose(AdvancedSettings(), pixelNight.key).intervalAfterCapture)
-        assertEquals(pixelNight.key, LaunchModeOptions.choose(AdvancedSettings(), pixelNight.key).launchCameraMode)
+        val custom = listOf(pixelNight)
+        assertEquals(false, LaunchModeOptions.choose(AdvancedSettings(), pixelNight.key, custom).intervalAfterCapture)
+        assertEquals(pixelNight.key, LaunchModeOptions.choose(AdvancedSettings(), pixelNight.key, custom).launchCameraMode)
+        val on = AdvancedSettings(intervalAfterCapture = true)
+        assertEquals(true, LaunchModeOptions.choose(on, pixelNight.key, custom).intervalAfterCapture)
+    }
+
+    @Test
+    fun `a recorded mode set to it turns the interval after capture on, as Night does`() {
+        val long = pixelNight.copy(intervalAfterCapture = true)
+        val chosen = LaunchModeOptions.choose(AdvancedSettings(), long.key, listOf(long, otherNight))
+        assertEquals(long.key, chosen.launchCameraMode)
+        assertEquals(true, chosen.intervalAfterCapture)
+        // Unknown to the list (another app's, or gone): nothing is turned on.
+        assertEquals(false, LaunchModeOptions.choose(AdvancedSettings(), long.key, listOf(otherNight)).intervalAfterCapture)
     }
 
     @Test

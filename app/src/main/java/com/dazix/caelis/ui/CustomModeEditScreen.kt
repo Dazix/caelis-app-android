@@ -34,13 +34,12 @@ import com.dazix.caelis.R
 import com.dazix.caelis.domain.cameramode.RecordedStep
 
 /**
- * Creates or edits one recorded mode: its name, the camera app it belongs to (prefilled with the
- * session's app) and the steps, which are recorded over that app and can be tested from here.
+ * Creates or edits one recorded mode: its name, the camera app it belongs to (the session's app for
+ * a new mode, shown and not editable) and the steps, which are recorded over that app and can be tested from here.
  */
 @Composable
 fun CustomModeEditScreen(
     draft: CustomModeDraft,
-    cameraApps: List<AppEntry>,
     onChange: ((CustomModeDraft) -> CustomModeDraft) -> Unit,
     onRecord: () -> Unit,
     onTest: () -> Unit,
@@ -48,7 +47,6 @@ fun CustomModeEditScreen(
     onDelete: () -> Unit,
     onBack: () -> Unit,
 ) {
-    var pickingApp by rememberSaveable { mutableStateOf(false) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     val appName = draft.appLabel ?: draft.packageName
     val focusManager = LocalFocusManager.current
@@ -69,12 +67,26 @@ fun CustomModeEditScreen(
                 keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 modifier = Modifier.fillMaxWidth(),
             )
-            ListRowButton(
-                title = stringResource(R.string.custom_mode_app),
-                subtitle = appName ?: stringResource(R.string.custom_mode_app_none),
-                icon = AppIcons.Session,
-                onClick = { pickingApp = true },
-            )
+            // Shown, not chosen: a new mode belongs to the session's camera app, and recorded steps
+            // only mean something in the app they were recorded in.
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.custom_mode_app),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = LocalContentColor.current.copy(alpha = 0.75f),
+                )
+                Text(
+                    text = appName ?: stringResource(R.string.custom_mode_app_none),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                draft.packageName?.let { pkg ->
+                    Text(
+                        text = pkg,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = LocalContentColor.current.copy(alpha = 0.75f),
+                    )
+                }
+            }
             if (draft.stepsFromAnotherApp) {
                 Text(
                     text = stringResource(R.string.custom_mode_steps_other_app),
@@ -82,6 +94,13 @@ fun CustomModeEditScreen(
                     color = MaterialTheme.colorScheme.error,
                 )
             }
+            // Off by default: unlike Night and Astro, nothing says a recorded mode is a long exposure.
+            SwitchRow(
+                title = stringResource(R.string.advanced_interval_after_capture),
+                description = stringResource(R.string.custom_mode_interval_after_capture_desc),
+                checked = draft.intervalAfterCapture,
+                onCheckedChange = { on -> onChange { it.copy(intervalAfterCapture = on) } },
+            )
         }
 
         SectionCard(
@@ -145,31 +164,6 @@ fun CustomModeEditScreen(
                 }
             }
         }
-    }
-
-    if (pickingApp) {
-        AlertDialog(
-            onDismissRequest = { pickingApp = false },
-            title = { Text(stringResource(R.string.custom_mode_app)) },
-            text = {
-                Column {
-                    if (cameraApps.isEmpty()) Text(stringResource(R.string.custom_mode_app_none_installed))
-                    cameraApps.forEach { app ->
-                        ChoiceRow(
-                            title = app.label,
-                            selected = app.packageName == draft.packageName,
-                            onSelect = {
-                                onChange { it.copy(packageName = app.packageName, appLabel = app.label) }
-                                pickingApp = false
-                            },
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { pickingApp = false }) { Text(stringResource(R.string.custom_mode_close)) }
-            },
-        )
     }
 
     if (confirmingDelete) {

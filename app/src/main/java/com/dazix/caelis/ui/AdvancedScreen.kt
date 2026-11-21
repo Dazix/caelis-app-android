@@ -93,7 +93,7 @@ fun AdvancedScreen(
                     title = mode.name,
                     description = stringResource(R.string.advanced_launch_mode_custom_desc),
                     selected = chosenMode == mode.key,
-                    onSelect = { onChange(LaunchModeOptions.choose(settings, mode.key)) },
+                    onSelect = { onChange(LaunchModeOptions.choose(settings, mode.key, custom)) },
                 )
             }
             ListRowButton(

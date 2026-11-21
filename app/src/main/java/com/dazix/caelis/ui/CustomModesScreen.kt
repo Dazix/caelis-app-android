@@ -28,13 +28,12 @@ fun CustomModesScreen(
         if (modes.isNotEmpty()) {
             SectionCard {
                 modes.forEach { mode ->
+                    // The package next to the label, as in the editor: two apps can share a label.
+                    val app = stringResource(R.string.custom_modes_row, mode.appLabel, mode.packageName)
+                    val steps = pluralStringResource(R.plurals.custom_modes_steps, mode.steps.size, mode.steps.size)
                     ListRowButton(
                         title = mode.name,
-                        subtitle = stringResource(
-                            R.string.custom_modes_row,
-                            mode.appLabel,
-                            pluralStringResource(R.plurals.custom_modes_steps, mode.steps.size, mode.steps.size),
-                        ),
+                        subtitle = "$app\n$steps",
                         icon = AppIcons.Edit,
                         onClick = { onEdit(mode) },
                     )

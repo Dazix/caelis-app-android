@@ -5,7 +5,7 @@ package com.dazix.caelis.domain.cameramode
  *
  * ```
  * v1
- * M  id  name  package  appLabel  naturalW  naturalH  createdAt
+ * M  id  name  package  appLabel  naturalW  naturalH  createdAt  intervalAfterCapture (1/0)
  * P  viewId  label  class  l  t  r  b                  (optional, the proof)
  * T  delay  x  y  viewId  label  class  l  t  r  b     (a tap; the signature fields empty = none)
  * S  delay  duration  x,y;x,y;…                        (a swipe)
@@ -26,7 +26,7 @@ object CustomModeCodec {
                 fields(
                     "M", mode.id, mode.name, mode.packageName, mode.appLabel,
                     mode.naturalWidthPx.toString(), mode.naturalHeightPx.toString(),
-                    mode.createdAtMs.toString(),
+                    mode.createdAtMs.toString(), if (mode.intervalAfterCapture) "1" else "0",
                 ),
             )
             mode.proof?.let { proof ->
@@ -96,7 +96,13 @@ object CustomModeCodec {
     }
 
     private fun parseMode(t: List<String>): CustomCameraMode? {
-        if (t.size != 8) return null
+        // Eight fields: a mode stored before the interval switch existed, which reads as off.
+        if (t.size != 8 && t.size != 9) return null
+        val intervalAfterCapture = when (t.getOrNull(8)) {
+            null, "0" -> false
+            "1" -> true
+            else -> return null
+        }
         val id = t[1].takeIf { it.isNotBlank() } ?: return null
         val pkg = t[3].takeIf { it.isNotBlank() } ?: return null
         return CustomCameraMode(
@@ -108,6 +114,7 @@ object CustomModeCodec {
             naturalWidthPx = t[5].toIntOrNull() ?: return null,
             naturalHeightPx = t[6].toIntOrNull() ?: return null,
             createdAtMs = t[7].toLongOrNull() ?: return null,
+            intervalAfterCapture = intervalAfterCapture,
         )
     }
 

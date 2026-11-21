@@ -36,6 +36,19 @@ class CustomModeCodecTest {
     }
 
     @Test
+    fun `the interval switch survives the round trip, and a mode stored before it reads as off`() {
+        val long = night.copy(intervalAfterCapture = true)
+        assertEquals(listOf(long), CustomModeCodec.decode(CustomModeCodec.encode(listOf(long))))
+
+        val old = CustomModeCodec.encode(listOf(night)).replace(Regex("(M\t[^\n]*)\t0\n"), "$1\n")
+        assertEquals(8, old.lines().first { it.startsWith("M\t") }.split('\t').size)
+        assertEquals(listOf(night), CustomModeCodec.decode(old))
+
+        val garbled = CustomModeCodec.encode(listOf(long)).replace(Regex("(M\t[^\n]*)\t1\n"), "$1\tyes\n")
+        assertTrue(CustomModeCodec.decode(garbled).isEmpty())
+    }
+
+    @Test
     fun `several modes keep their order`() {
         val astro = night.copy(id = "b2", name = "Astro", proof = null)
         assertEquals(listOf(night, astro), CustomModeCodec.decode(CustomModeCodec.encode(listOf(night, astro))))

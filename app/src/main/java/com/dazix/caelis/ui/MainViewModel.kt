@@ -826,11 +826,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val customModes: StateFlow<List<CustomCameraMode>> =
         settings.customModes.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    /** The camera apps a mode can be recorded in. */
-    val cameraApps: StateFlow<List<AppEntry>> = allApps
-        .map { apps -> apps.filter { it.isCamera } }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
     private val modeDraftState = MutableStateFlow(CustomModeDraft())
     val modeDraft: StateFlow<CustomModeDraft> = modeDraftState.asStateFlow()
 

@@ -219,7 +219,7 @@
     <string name="custom_mode_name_hint">Noc, Portrét…</string>
     <string name="custom_mode_app">Aplikace fotoaparátu</string>
     <string name="custom_mode_app_none">Nevybrána</string>
-    <string name="custom_mode_app_none_installed">Žádná aplikace fotoaparátu nenalezena.</string>
+    <string name="custom_mode_interval_after_capture_desc">Výběr tohoto režimu zapne i tuto volbu, stejně jako Noční režim. Pro režimy, kde focení trvá dlouho.</string>
     <string name="custom_mode_steps">Kroky</string>
     <string name="custom_mode_steps_desc">Přehrají se na začátku série, jakmile se otevře fotoaparát.</string>
     <string name="custom_mode_steps_none">Zatím nic nenahráno.</string>

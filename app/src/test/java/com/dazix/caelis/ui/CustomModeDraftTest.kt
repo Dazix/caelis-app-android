@@ -37,10 +37,14 @@ class CustomModeDraftTest {
         assertEquals(42L, fresh.createdAtMs)
         assertEquals(1080, fresh.naturalWidthPx)
 
-        val edited = CustomModeDraft.from(fresh).copy(name = "Night").toMode({ "other" }, 99L)!!
+        assertEquals(false, fresh.intervalAfterCapture)
+
+        val edited = CustomModeDraft.from(fresh).copy(name = "Night", intervalAfterCapture = true).toMode({ "other" }, 99L)!!
         assertEquals("new", edited.id)
         assertEquals(42L, edited.createdAtMs)
         assertEquals("Night", edited.name)
+        assertEquals(true, edited.intervalAfterCapture)
+        assertEquals(true, CustomModeDraft.from(edited).intervalAfterCapture)
     }
 
     @Test

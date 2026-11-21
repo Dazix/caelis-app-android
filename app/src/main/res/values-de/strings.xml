@@ -213,7 +213,7 @@
     <string name="custom_mode_name_hint">Nacht, Porträt…</string>
     <string name="custom_mode_app">Kamera-App</string>
     <string name="custom_mode_app_none">Keine gewählt</string>
-    <string name="custom_mode_app_none_installed">Keine Kamera-App gefunden.</string>
+    <string name="custom_mode_interval_after_capture_desc">Die Wahl dieses Modus schaltet die Option ebenfalls ein, wie der Nachtmodus. Für Modi mit langen Aufnahmen.</string>
     <string name="custom_mode_steps">Schritte</string>
     <string name="custom_mode_steps_desc">Werden zu Beginn einer Serie abgespielt, sobald die Kamera-App offen ist.</string>
     <string name="custom_mode_steps_none">Noch nichts aufgenommen.</string>

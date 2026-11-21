@@ -23,9 +23,17 @@ internal object LaunchModeOptions {
      * The settings after the user picked [key] (null: leave the mode alone). Night and Astro turn
      * [AdvancedSettings.intervalAfterCapture] on, because their captures run for minutes and a
      * tap during one cancels it; the user can turn it off again. Nothing turns it off on its own.
+     * A recorded mode in [custom] does the same when the user set it to
+     * ([CustomCameraMode.intervalAfterCapture]).
      */
-    fun choose(settings: AdvancedSettings, key: String?): AdvancedSettings {
-        val longExposure = key == CameraProfile.MODE_NIGHT || key == CameraProfile.MODE_ASTRO
+    fun choose(
+        settings: AdvancedSettings,
+        key: String?,
+        custom: List<CustomCameraMode> = emptyList(),
+    ): AdvancedSettings {
+        val recorded = CustomModeKey.idOf(key)?.let { id -> custom.firstOrNull { it.id == id } }
+        val longExposure = key == CameraProfile.MODE_NIGHT || key == CameraProfile.MODE_ASTRO ||
+            recorded?.intervalAfterCapture == true
         return settings.copy(
             launchCameraMode = key,
             intervalAfterCapture = settings.intervalAfterCapture || longExposure,

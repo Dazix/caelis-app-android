@@ -236,12 +236,22 @@ fun HomeScreen(
         }
 
         SectionCard(title = stringResource(R.string.nav_app_picker)) {
-            Text(
-                text = setup.targetLabel
-                    ?: setup.targetPackage
-                    ?: stringResource(R.string.home_target_app_none),
-                style = MaterialTheme.typography.bodyLarge,
-            )
+            // The package under the name, as in the mode editor: two apps can share a label.
+            Column {
+                Text(
+                    text = setup.targetLabel
+                        ?: setup.targetPackage
+                        ?: stringResource(R.string.home_target_app_none),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                if (setup.targetLabel != null && setup.targetPackage != null) {
+                    Text(
+                        text = setup.targetPackage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = LocalContentColor.current.copy(alpha = 0.75f),
+                    )
+                }
+            }
             StatusChip(
                 text = stringResource(
                     if (calibrated) R.string.home_calibration_ok else R.string.home_calibration_missing

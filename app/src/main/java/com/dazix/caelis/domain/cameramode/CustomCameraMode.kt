@@ -24,6 +24,11 @@ data class CustomCameraMode(
     val naturalWidthPx: Int = 0,
     val naturalHeightPx: Int = 0,
     val createdAtMs: Long = 0L,
+    /**
+     * Choosing this mode also turns on "interval after the photo is finished", as the built-in Night
+     * and Astro modes do: a mode whose captures run for seconds to minutes is cancelled by the next tap.
+     */
+    val intervalAfterCapture: Boolean = false,
 ) {
     /** The value stored in `launchCameraMode` for this mode. */
     val key: String get() = CustomModeKey.format(id)

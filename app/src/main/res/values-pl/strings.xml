@@ -219,7 +219,7 @@
     <string name="custom_mode_name_hint">Noc, Portret…</string>
     <string name="custom_mode_app">Aplikacja aparatu</string>
     <string name="custom_mode_app_none">Nie wybrano</string>
-    <string name="custom_mode_app_none_installed">Nie znaleziono aplikacji aparatu.</string>
+    <string name="custom_mode_interval_after_capture_desc">Wybranie tego trybu włącza też tę opcję, jak tryb nocny. Dla trybów, w których zdjęcie trwa długo.</string>
     <string name="custom_mode_steps">Kroki</string>
     <string name="custom_mode_steps_desc">Odtwarzane na początku sesji, gdy aparat się otworzy.</string>
     <string name="custom_mode_steps_none">Nic jeszcze nie nagrano.</string>

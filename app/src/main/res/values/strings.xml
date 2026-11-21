@@ -213,7 +213,7 @@
     <string name="custom_mode_name_hint">Night, Portrait…</string>
     <string name="custom_mode_app">Camera app</string>
     <string name="custom_mode_app_none">None chosen</string>
-    <string name="custom_mode_app_none_installed">No camera app found.</string>
+    <string name="custom_mode_interval_after_capture_desc">Choosing this mode also turns that setting on, as Night mode does. For modes whose photos take a long time.</string>
     <string name="custom_mode_steps">Steps</string>
     <string name="custom_mode_steps_desc">Replayed at the start of a session, after the camera app opens.</string>
     <string name="custom_mode_steps_none">Nothing recorded yet.</string>
