@@ -137,11 +137,12 @@
     <string name="setup_min_battery_value">%1$d %%</string>
     <string name="setup_min_free_space">Zatrzymaj poniżej wolnego miejsca</string>
     <string name="setup_verify_captures">Weryfikuj zdjęcia</string>
-    <string name="setup_verify_captures_desc">Po każdym zdjęciu aplikacja sprawdza, czy naprawdę pojawiła się nowa fotografia, i ostrzega, gdy aplikacja aparatu przestanie zapisywać. Aby to zrobić, musi czytać Twoją bibliotekę zdjęć, dlatego Android prosi o uprawnienie do zdjęć po włączeniu tej opcji. Zostaw ją wyłączoną, a dostęp do zdjęć w ogóle nie będzie wymagany.</string>
+    <string name="setup_verify_captures_desc">Po każdym zdjęciu aplikacja sprawdza, czy naprawdę pojawiła się nowa fotografia, i ostrzega, gdy aplikacja aparatu przestanie zapisywać. Aby to zrobić, musi czytać Twoją bibliotekę zdjęć, dlatego Android prosi o dostęp do wszystkich zdjęć po włączeniu tej opcji (wybrane zdjęcia nie wystarczą). Zostaw ją wyłączoną, a dostęp do zdjęć w ogóle nie będzie wymagany.</string>
     <string name="setup_verify_permission_needed">Weryfikacja wymaga dostępu do wszystkich zdjęć, którego jeszcze nie ma. Sesja nadal działa i robi zdjęcia – po prostu nie powie Ci, gdy aplikacja aparatu przestanie zapisywać.</string>
     <string name="setup_verify_permission_partial">Aplikacji udostępniono tylko wybrane zdjęcia, więc nie widzi klatek, które ta sesja zaraz zrobi. Otwórz ustawienia aplikacji i ustaw Zdjęcia i filmy na Zezwalaj na wszystkie.</string>
     <string name="setup_verify_open_settings">Otwórz ustawienia aplikacji</string>
     <string name="setup_verify_permission_granted">Przyznano uprawnienie do zdjęć.</string>
+    <string name="setup_verify_turned_off">Weryfikacja wyłączona: brak dostępu do zdjęć</string>
     <string name="setup_tap_area">Cel stuknięcia</string>
     <string name="setup_tap_area_none">Nic jeszcze nie skalibrowano. Użyj Kalibracji na ekranie głównym: stuknij raz, by wskazać punkt, albo przeciągnij prostokąt, by wskazać obszar.</string>
     <string name="setup_tap_area_point">Skalibrowano jako pojedynczy punkt.</string>
@@ -205,7 +206,7 @@
     <string name="advanced_launch_mode_unavailable">Profil dla %1$s nie zna przycisków trybów tej aplikacji, więc nie ma trybu, na który można przełączyć.</string>
     <string name="advanced_launch_mode_unsupported">%1$s nie jest trybem, na który profil dla %2$s potrafi przełączyć, więc nic nie zostanie przełączone. Wybierz jeden z trybów poniżej.</string>
     <string name="advanced_interval_after_capture">Odstęp od zakończenia zdjęcia</string>
-    <string name="advanced_interval_after_capture_desc">Kolejne zdjęcie powstaje dopiero po upływie odstępu od zakończenia poprzedniego, nigdy w jego trakcie. Do trybu nocnego i astro, które trwają minuty. Koniec rozpoznaje w galerii, jeśli dostęp do zdjęć jest dozwolony, a w przeciwnym razie po spuście aparatu.</string>
+    <string name="advanced_interval_after_capture_desc">Kolejne zdjęcie powstaje dopiero po upływie odstępu od zakończenia poprzedniego, nigdy w jego trakcie. Do trybu nocnego i astro, które trwają minuty. Koniec rozpoznaje w galerii, jeśli dostęp do wszystkich zdjęć jest dozwolony, a w przeciwnym razie po spuście aparatu.</string>
     <string name="advanced_photo_access_title">Zezwolić na dostęp do zdjęć?</string>
     <string name="advanced_photo_access_body">Z dostępem do zdjęć aplikacja dokładnie rozpozna, kiedy aparat zapisał zdjęcie, i dopiero wtedy zacznie odliczać odstęp. Odczytuje tylko datę, folder i aplikację źródłową nowych zdjęć. Bez dostępu nadal działa, a koniec zdjęcia ocenia po spuście aparatu, co jest mniej pewne.</string>
     <string name="advanced_photo_access_later">Nie teraz</string>

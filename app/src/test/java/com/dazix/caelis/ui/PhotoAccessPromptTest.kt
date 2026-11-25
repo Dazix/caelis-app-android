@@ -18,8 +18,16 @@ class PhotoAccessPromptTest {
     @Test
     fun `switching on without full access explains`() {
         assertTrue(PhotoAccessPrompt.explainOnToggle(turnedOn = true, access = Access.MISSING))
-        // "Select photos" cannot contain a photo that does not exist yet; the dialog leads to "Allow all".
+        // "Select photos" cannot contain a photo that does not exist yet.
         assertTrue(PhotoAccessPrompt.explainOnToggle(turnedOn = true, access = Access.PARTIAL))
+    }
+
+    @Test
+    fun `allow leads to the app settings only after a partial grant`() {
+        // Asked again after "Select photos", Android opens only the picker for more photos.
+        assertTrue(PhotoAccessPrompt.allowOpensSettings(Access.PARTIAL))
+        assertFalse(PhotoAccessPrompt.allowOpensSettings(Access.MISSING))
+        assertFalse(PhotoAccessPrompt.allowOpensSettings(Access.GRANTED))
     }
 
     @Test
@@ -28,6 +36,13 @@ class PhotoAccessPromptTest {
         Access.entries.forEach { access ->
             assertFalse(PhotoAccessPrompt.explainOnToggle(turnedOn = false, access = access))
         }
+    }
+
+    @Test
+    fun `a refused or dismissed dialog switches verification off, selected photos keep it`() {
+        assertTrue(PhotoAccessPrompt.verifyOffAfterAnswer(Access.MISSING))
+        assertFalse(PhotoAccessPrompt.verifyOffAfterAnswer(Access.PARTIAL))
+        assertFalse(PhotoAccessPrompt.verifyOffAfterAnswer(Access.GRANTED))
     }
 
     @Test

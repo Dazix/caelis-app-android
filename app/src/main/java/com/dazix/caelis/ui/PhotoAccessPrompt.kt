@@ -23,10 +23,24 @@ object PhotoAccessPrompt {
      * Only the user's own flip of the switch explains and asks. Choosing Night Sight or Astro turns the
      * setting on too ([LaunchModeOptions.choose]), and a dialog popping up over a mode choice would
      * read as something the mode requires; the status under the switch says it there instead.
-     * Partial access asks again as well: the system dialog is how "Allow all" is reached.
+     * Partial access explains as well, and its Allow leads to the app's settings ([allowOpensSettings]).
      */
     fun explainOnToggle(turnedOn: Boolean, access: Access): Boolean =
         turnedOn && access != Access.GRANTED
+
+    /**
+     * With "Select photos" already granted, asking again only opens the picker for more photos
+     * (seen on Android 17); "Allow all" is then reachable only in the app's settings, so that is
+     * where Allow goes.
+     */
+    fun allowOpensSettings(access: Access): Boolean = access == Access.PARTIAL
+
+    /**
+     * Capture verification after the system dialog: refused or dismissed, it is switched off, since it
+     * cannot work without photos. "Select photos" keeps it on, as the user did grant something, and
+     * the screen says what is missing.
+     */
+    fun verifyOffAfterAnswer(access: Access): Boolean = access == Access.MISSING
 
     /** The status line is shown while the setting can take effect. */
     fun showStatus(enabled: Boolean, hasApp: Boolean): Boolean = enabled && hasApp

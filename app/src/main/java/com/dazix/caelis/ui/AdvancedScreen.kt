@@ -1,6 +1,7 @@
 package com.dazix.caelis.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
@@ -196,7 +197,11 @@ fun AdvancedScreen(
                 Button(
                     onClick = {
                         explainingPhotoAccess = false
-                        onRequestMediaPermission()
+                        if (PhotoAccessPrompt.allowOpensSettings(photoAccess)) {
+                            onOpenAppSettings()
+                        } else {
+                            onRequestMediaPermission()
+                        }
                     },
                 ) { Text(stringResource(R.string.action_grant)) }
             },
@@ -213,6 +218,7 @@ fun AdvancedScreen(
  * Says how the end of a photo is seen. Missing access is not an error here (the shutter still tells),
  * so it is worded as what happens instead and not coloured as a fault. The app settings button is
  * there because Android stops showing the request after two refusals, and then only settings remain.
+ * After "Select photos" it is the only button: asking again opens just the picker for more photos.
  */
 @Composable
 private fun PhotoAccessStatus(
@@ -224,28 +230,31 @@ private fun PhotoAccessStatus(
         StatusChip(text = stringResource(R.string.setup_verify_permission_granted), granted = true)
         return
     }
-    Text(
-        text = stringResource(
-            if (access == PhotoAccessPrompt.Access.PARTIAL) {
-                R.string.setup_verify_permission_partial
-            } else {
-                R.string.advanced_photo_access_missing
+    // No gap between the text and its buttons (the card spaces by 10 dp): with one the buttons read
+    // as a row of their own rather than as part of this switch's status.
+    Column {
+        val partial = access == PhotoAccessPrompt.Access.PARTIAL
+        IconText(
+            text = stringResource(
+                if (partial) R.string.setup_verify_permission_partial else R.string.advanced_photo_access_missing
+            ),
+            icon = if (partial) AppIcons.Warning else AppIcons.Info,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        // Wraps instead of clipping when the labels grow with the font scale.
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (!PhotoAccessPrompt.allowOpensSettings(access)) {
+                TextButton(onClick = onRequestMediaPermission) {
+                    Text(stringResource(R.string.action_grant))
+                }
             }
-        ),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    // Wraps instead of clipping when the labels grow with the font scale.
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        TextButton(onClick = onRequestMediaPermission) {
-            Text(stringResource(R.string.action_grant))
-        }
-        TextButton(onClick = onOpenAppSettings) {
-            Text(stringResource(R.string.setup_verify_open_settings))
+            TextButton(onClick = onOpenAppSettings) {
+                Text(stringResource(R.string.setup_verify_open_settings))
+            }
         }
     }
 }
