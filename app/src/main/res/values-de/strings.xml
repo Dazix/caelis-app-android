@@ -200,6 +200,10 @@
     <string name="advanced_launch_mode_unsupported">%1$s ist kein Modus, in den das Profil für %2$s umschalten kann, daher wird nichts umgeschaltet. Wählen Sie einen der Modi unten.</string>
     <string name="advanced_interval_after_capture">Intervall ab fertigem Foto</string>
     <string name="advanced_interval_after_capture_desc">Das nächste Foto folgt erst ein Intervall nach dem Ende des vorherigen, nie währenddessen. Für Nachtsicht und Astro, die Minuten dauern. Das Ende erkennt die App in der Galerie, wenn der Fotozugriff erlaubt ist, sonst am Auslöser der Kamera-App.</string>
+    <string name="advanced_photo_access_title">Fotozugriff erlauben?</string>
+    <string name="advanced_photo_access_body">Mit Zugriff auf Ihre Fotos erkennt die App genau, wann die Kamera-App das Foto gespeichert hat, und beginnt erst dann das Intervall. Sie liest nur Datum, Ordner und Quell-App neuer Fotos. Ohne Zugriff funktioniert es weiter und erkennt das Ende am Auslöser der Kamera-App, was weniger zuverlässig ist.</string>
+    <string name="advanced_photo_access_later">Jetzt nicht</string>
+    <string name="advanced_photo_access_missing">Ohne Fotozugriff wird das Ende eines Fotos am Auslöser der Kamera-App erkannt, was weniger zuverlässig ist.</string>
     <string name="advanced_self_timer">Selbstauslöser ausgeschaltet sicherstellen</string>
     <string name="advanced_self_timer_desc">Prüft vor dem Start die Timer-Einstellung der Kamera-App, denn ein Selbstauslöser würde jede Aufnahme verschieben.</string>
     <string name="advanced_dismiss_post_capture">Bildschirme nach Aufnahme schließen</string>

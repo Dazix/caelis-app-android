@@ -200,6 +200,10 @@
     <string name="advanced_launch_mode_unsupported">%1$s is not a mode the profile for %2$s can switch into, so nothing is switched. Pick one of the modes below.</string>
     <string name="advanced_interval_after_capture">Interval after the photo is finished</string>
     <string name="advanced_interval_after_capture_desc">The next shot is taken one interval after the previous photo is finished, never during it. For Night Sight and Astro, which take minutes. The end is seen in the photo library when photo access is allowed, otherwise on the camera app’s shutter.</string>
+    <string name="advanced_photo_access_title">Allow photo access?</string>
+    <string name="advanced_photo_access_body">With access to your photos the app sees exactly when the camera app has saved the photo, and only then starts the interval. It reads only the date, folder and source app of new photos. Without access it still works and judges the end by the camera app’s shutter, which is less reliable.</string>
+    <string name="advanced_photo_access_later">Not now</string>
+    <string name="advanced_photo_access_missing">No photo access: the end of a photo is judged by the camera app’s shutter, which is less reliable.</string>
     <string name="advanced_self_timer">Make sure the self-timer is off</string>
     <string name="advanced_self_timer_desc">Checks the camera app\'s timer setting before starting, because a self-timer would offset every frame.</string>
     <string name="advanced_dismiss_post_capture">Dismiss post-capture screens</string>

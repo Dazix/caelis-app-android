@@ -206,6 +206,10 @@
     <string name="advanced_launch_mode_unsupported">Režim %1$s profil pre aplikáciu %2$s prepnúť nevie, takže sa nič neprepne. Vyberte niektorý z režimov nižšie.</string>
     <string name="advanced_interval_after_capture">Interval až po dokončení snímky</string>
     <string name="advanced_interval_after_capture_desc">Ďalšia snímka sa nasníma až interval po dokončení predchádzajúcej, nikdy počas nej. Pre nočný režim a astro, ktoré trvajú minúty. Koniec spozná v galérii, ak je povolený prístup k fotkám, inak na spúšti fotoaparátu.</string>
+    <string name="advanced_photo_access_title">Povoliť prístup k fotkám?</string>
+    <string name="advanced_photo_access_body">S prístupom k fotkám aplikácia presne spozná, kedy fotoaparát snímku uložil, a až potom začne počítať interval. Číta len dátum, priečinok a zdrojovú aplikáciu nových fotiek. Bez prístupu funguje ďalej a koniec snímky odhaduje podľa spúšte fotoaparátu, čo je menej spoľahlivé.</string>
+    <string name="advanced_photo_access_later">Teraz nie</string>
+    <string name="advanced_photo_access_missing">Bez prístupu k fotkám sa koniec snímky odhaduje podľa spúšte fotoaparátu, čo je menej spoľahlivé.</string>
     <string name="advanced_self_timer">Skontrolovať vypnutú samospúšť</string>
     <string name="advanced_self_timer_desc">Pred spustením overí nastavenie samospúšte vo fotoaplikácii, pretože samospúšť by posunula každú snímku.</string>
     <string name="advanced_dismiss_post_capture">Zatvárať obrazovky po snímke</string>

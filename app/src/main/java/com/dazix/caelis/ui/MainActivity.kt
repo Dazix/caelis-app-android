@@ -392,7 +392,11 @@ private fun CaelisScreen(
             profile = profile,
             targetLabel = setup.targetPackage?.let { setup.targetLabel ?: it },
             overlayAllowed = permissions.canDrawOverlays,
+            mediaPermissionGranted = permissions.readMediaImagesGranted,
+            mediaPermissionPartial = permissions.readMediaPartialGranted,
             onChange = { updated -> viewModel.updateAdvanced { updated } },
+            onRequestMediaPermission = onRequestMediaPermission,
+            onOpenAppSettings = { context.launchSafely(Permissions.appInfo(context)) },
             onBack = viewModel::back,
         )
 
