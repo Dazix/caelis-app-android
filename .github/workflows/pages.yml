@@ -35,6 +35,8 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+          # Full history: the privacy policy's "last updated" is read from git (scripts/build_site.py).
+          fetch-depth: 0
 
       - name: Build
         run: python3 scripts/build_site.py

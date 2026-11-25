@@ -1,11 +1,11 @@
 {
-  "_comment": "The privacy policy at <base>/privacy/ and <base>/<lang>/privacy/, rendered by scripts/build_site.py through site/privacy.html. Google Play checks that it names the app and the developer exactly as the store listing does (app title in metadata/android/*/title.txt, developer name in Play Console). Keep every language saying the same thing, and keep it true to the app: AGENTS.md (network, ARCore, backup) is the source. Text may carry <strong>, <em>, <br> and [label](https://… or mailto:…) links; sections need the same count in every language.",
+  "_comment": "The privacy policy at <base>/privacy/ and <base>/<lang>/privacy/, rendered by scripts/build_site.py through site/privacy.html. Google Play checks that it names the app and the developer exactly as the store listing does (app title in metadata/android/*/title.txt, developer name in Play Console). Keep every language saying the same thing, and keep it true to the app: AGENTS.md (network, ARCore, backup) is the source. Text may carry <strong>, <em>, <br> and [label](https://… or mailto:…) links; sections need the same count in every language. \"updated\" keeps the first publication date fixed and {date} is filled at build with the day privacy.json last changed on main (git).",
   "en": {
     "meta.title": "Privacy Policy – CAELIS – Time-lapse & Sky AR",
     "meta.desc": "How the Android app CAELIS – Time-lapse & Sky AR by David Šanda handles your data.",
     "kicker": "Privacy Policy",
     "title": "CAELIS – Time-lapse & Sky AR",
-    "updated": "Effective from 20 November 2026",
+    "updated": "Published 19 November 2026 · Last updated {date}",
     "back": "Back to CAELIS",
     "toc": "Contents",
     "sections": [
@@ -66,7 +66,7 @@
     "meta.desc": "Jak aplikace pro Android CAELIS – časosběr a AR obloha od Davida Šandy zachází s vašimi údaji.",
     "kicker": "Zásady ochrany soukromí",
     "title": "CAELIS – časosběr a AR obloha",
-    "updated": "Účinné od 20. listopadu 2026",
+    "updated": "Zveřejněno 19. listopadu 2026 · Naposledy aktualizováno {date}",
     "back": "Zpět na CAELIS",
     "toc": "Obsah",
     "sections": [
@@ -127,7 +127,7 @@
     "meta.desc": "Ako aplikácia pre Android CAELIS – časozber a AR obloha od Davida Šandu narába s vašimi údajmi.",
     "kicker": "Zásady ochrany súkromia",
     "title": "CAELIS – časozber a AR obloha",
-    "updated": "Účinné od 20. novembra 2026",
+    "updated": "Zverejnené 19. novembra 2026 · Naposledy aktualizované {date}",
     "back": "Späť na CAELIS",
     "toc": "Obsah",
     "sections": [
@@ -188,7 +188,7 @@
     "meta.desc": "Jak aplikacja na Androida CAELIS – Timelapse i AR niebo autorstwa Davida Šandy postępuje z Twoimi danymi.",
     "kicker": "Polityka prywatności",
     "title": "CAELIS – Timelapse i AR niebo",
-    "updated": "Obowiązuje od 20 listopada 2026",
+    "updated": "Opublikowano 19 listopada 2026 · Ostatnia aktualizacja {date}",
     "back": "Powrót do CAELIS",
     "toc": "Spis treści",
     "sections": [
@@ -249,7 +249,7 @@
     "meta.desc": "Wie die Android-App CAELIS – Zeitraffer & Sky-AR von David Šanda mit Ihren Daten umgeht.",
     "kicker": "Datenschutzerklärung",
     "title": "CAELIS – Zeitraffer & Sky-AR",
-    "updated": "Gültig ab 20. November 2026",
+    "updated": "Veröffentlicht am 19. November 2026 · Zuletzt aktualisiert am {date}",
     "back": "Zurück zu CAELIS",
     "toc": "Inhalt",
     "sections": [
