@@ -326,7 +326,7 @@ internal object RunPlanCodec {
             encFloat(target?.heightFraction),
             encBool(target?.jitter ?: false),
             encString(advanced.launchCameraMode),
-            encBool(advanced.adaptiveLongExposureWait),
+            encBool(advanced.intervalAfterCapture),
             encBool(advanced.ensureSelfTimerOff),
             encBool(advanced.dismissPostCaptureUi),
             encBool(advanced.keepScreenOn),
@@ -373,7 +373,7 @@ internal object RunPlanCodec {
             ),
             advanced = AdvancedSettings(
                 launchCameraMode = decString(f[21]),
-                adaptiveLongExposureWait = decBool(f[22]),
+                intervalAfterCapture = decBool(f[22]),
                 ensureSelfTimerOff = decBool(f[23]),
                 dismissPostCaptureUi = decBool(f[24]),
                 keepScreenOn = decBool(f[25]),

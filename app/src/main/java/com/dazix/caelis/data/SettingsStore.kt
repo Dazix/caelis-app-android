@@ -383,6 +383,7 @@ internal object SettingsMapping {
     private val CONFIG_TARGET_JITTER = booleanPreferencesKey("config_target_jitter")
 
     private val ADV_LAUNCH_CAMERA_MODE = stringPreferencesKey("advanced_launch_camera_mode")
+    // Interval after capture; the key is the adaptive long-exposure wait's, which it replaced.
     private val ADV_ADAPTIVE_LONG_EXPOSURE_WAIT = booleanPreferencesKey("advanced_adaptive_long_exposure_wait")
     private val ADV_ENSURE_SELF_TIMER_OFF = booleanPreferencesKey("advanced_ensure_self_timer_off")
     private val ADV_DISMISS_POST_CAPTURE_UI = booleanPreferencesKey("advanced_dismiss_post_capture_ui")
@@ -577,7 +578,7 @@ internal object SettingsMapping {
 
     fun writeAdvanced(prefs: MutablePreferences, settings: AdvancedSettings) {
         prefs.put(ADV_LAUNCH_CAMERA_MODE, settings.launchCameraMode)
-        prefs[ADV_ADAPTIVE_LONG_EXPOSURE_WAIT] = settings.adaptiveLongExposureWait
+        prefs[ADV_ADAPTIVE_LONG_EXPOSURE_WAIT] = settings.intervalAfterCapture
         prefs[ADV_ENSURE_SELF_TIMER_OFF] = settings.ensureSelfTimerOff
         prefs[ADV_DISMISS_POST_CAPTURE_UI] = settings.dismissPostCaptureUi
         prefs[ADV_KEEP_SCREEN_ON] = settings.keepScreenOn
@@ -588,7 +589,7 @@ internal object SettingsMapping {
     fun readAdvanced(prefs: Preferences): AdvancedSettings = runCatching {
         AdvancedSettings(
             launchCameraMode = prefs[ADV_LAUNCH_CAMERA_MODE],
-            adaptiveLongExposureWait = prefs[ADV_ADAPTIVE_LONG_EXPOSURE_WAIT] ?: false,
+            intervalAfterCapture = prefs[ADV_ADAPTIVE_LONG_EXPOSURE_WAIT] ?: false,
             ensureSelfTimerOff = prefs[ADV_ENSURE_SELF_TIMER_OFF] ?: false,
             dismissPostCaptureUi = prefs[ADV_DISMISS_POST_CAPTURE_UI] ?: false,
             // Absent key -> the shared default, which for these two is whatever

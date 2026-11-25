@@ -58,6 +58,21 @@ data class TapOutcome(
             (matchedBy?.let { " via $it" } ?: "")
 }
 
+/** What [ShutterDispatcher.selectCameraMode] did. */
+enum class ModeSelection {
+    /** The mode's chip was already selected; nothing was tapped. */
+    ALREADY,
+
+    /** The chip was clicked and the UI was given time to settle. */
+    SWITCHED,
+
+    /** No chip for the mode on screen (yet): a camera still starting up shows its carousel late. */
+    NOT_FOUND,
+
+    /** The profile knows no such mode; nothing will ever be tapped for it. */
+    UNKNOWN_MODE,
+}
+
 /**
  * Presses the shutter. Hybrid on purpose: `ACTION_CLICK` on the real node is precise and survives
  * layout changes, but plenty of camera apps expose a shutter that is not click-accessible (custom
@@ -147,14 +162,22 @@ class ShutterDispatcher(private val service: AccessibilityService) {
         )
     }
 
-    /** True while the camera app still shows one of the profile's long-exposure busy indicators. */
-    fun isBusy(profile: CameraProfile): Boolean {
-        if (profile.longExposureBusyPatterns.isEmpty()) return false
-        return nodes().any { node ->
-            profile.longExposureBusyPatterns.matchesAny(node.contentDescription) ||
-                profile.longExposureBusyPatterns.matchesAny(node.text)
-        }
+    /**
+     * True while the camera app is visibly still working on a capture: one of the profile's busy
+     * indicators is on screen, or a shutter is shown but disabled. The second rule is what makes this
+     * work for any camera app: Pixel Camera's Astro disables its shutter (and relabels it "Zrušit
+     * fotku") for the whole exposure, and a camera that will not take a tap is busy whatever it says.
+     */
+    fun isCameraBusy(profile: CameraProfile): Boolean = nodes().any { node ->
+        profile.longExposureBusyPatterns.matchesAny(node.contentDescription) ||
+            profile.longExposureBusyPatterns.matchesAny(node.text) ||
+            (node.isVisibleToUser && !node.isEnabled && isShutterNode(profile, node))
     }
+
+    private fun isShutterNode(profile: CameraProfile, node: AccessibilityNodeInfo): Boolean =
+        profile.isShutterViewId(node.viewIdResourceName) ||
+            CameraProfiles.generic.isShutterViewId(node.viewIdResourceName) ||
+            profile.isShutterLabel(node.contentDescription)
 
     /** Clicks post-capture chips/previews standing between us and the next shot. Returns how many. */
     fun dismissPostCaptureUi(profile: CameraProfile): Int {
@@ -197,36 +220,33 @@ class ShutterDispatcher(private val service: AccessibilityService) {
      * [modeKey] is a stable key ([CameraProfile.MODE_PHOTO] and friends), never a display string:
      * chip labels are localized, so comparing them against an English literal silently did nothing
      * on a Czech phone. The profile's [CameraProfile.modeAliases] carry the per-language patterns,
-     * and [CameraProfile.eligibleModeChipPatterns] still constrains which nodes may be tapped, so an
-     * unrelated label cannot be hit. An unknown key does nothing rather than guessing.
+     * and [CameraProfile.isModeChipFor] decides which node is that mode's chip, so an unrelated
+     * control with the same words (Pixel's minibar Night Sight icon, which opens the settings sheet)
+     * cannot be hit. An unknown key does nothing rather than guessing.
      */
-    fun selectCameraMode(profile: CameraProfile, modeKey: String, onDone: (Boolean) -> Unit) {
-        val wanted = profile.modePatterns(modeKey)
-        if (wanted.isEmpty()) {
+    fun selectCameraMode(profile: CameraProfile, modeKey: String, onDone: (ModeSelection) -> Unit) {
+        if (!profile.supportsMode(modeKey)) {
             Log.i(TAG, "profile ${profile.id} knows no mode '$modeKey', leaving the app alone")
-            onDone(false)
+            onDone(ModeSelection.UNKNOWN_MODE)
             return
         }
-        val alreadyThere = nodes().any { node ->
-            node.isSelected && (wanted.matchesAny(node.contentDescription) || wanted.matchesAny(node.text))
-        }
+        fun AccessibilityNodeInfo.isChip(): Boolean =
+            profile.isModeChipFor(modeKey, viewIdResourceName, contentDescription) ||
+                profile.isModeChipFor(modeKey, viewIdResourceName, text)
+
+        val alreadyThere = nodes().any { node -> node.isSelected && node.isChip() }
         if (alreadyThere) {
-            onDone(false)
+            onDone(ModeSelection.ALREADY)
             return
         }
-        val eligible = profile.eligibleModeChipPatterns
-        val chip = nodes().firstOrNull { node ->
-            val label = node.contentDescription ?: node.text ?: return@firstOrNull false
-            node.isVisibleToUser &&
-                wanted.matchesAny(label) &&
-                (eligible.isEmpty() || eligible.matchesAny(label))
-        }
+        val chip = nodes().firstOrNull { node -> node.isVisibleToUser && node.isChip() }
+        if (chip == null) Log.i(TAG, "no '$modeKey' chip on screen for profile ${profile.id}")
         val switched = clickableSelfOrAncestor(chip)?.performActionSafely() == true
         if (!switched) {
-            onDone(false)
+            onDone(ModeSelection.NOT_FOUND)
             return
         }
-        handler.postDelayed({ onDone(true) }, UI_SETTLE_MS)
+        handler.postDelayed({ onDone(ModeSelection.SWITCHED) }, UI_SETTLE_MS)
     }
 
     /** True when the app currently shows a still-photo mode indicator (empty patterns: unknown). */

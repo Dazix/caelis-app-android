@@ -136,6 +136,8 @@ class CameraProfileTest {
 
         assertTrue(pixel.matchesMode(CameraProfile.MODE_PHOTO, "Foto"))
         assertTrue(pixel.matchesMode(CameraProfile.MODE_PHOTO, "Fotografie"))
+        // What Pixel Camera actually shows in Czech; "Foto" alone never found its chip.
+        assertTrue(pixel.matchesMode(CameraProfile.MODE_PHOTO, "Fotka"))
         assertTrue(pixel.matchesMode(CameraProfile.MODE_NIGHT, "Noční vidění"))
         assertTrue(pixel.matchesMode(CameraProfile.MODE_NIGHT, "Nocni videni"))
         assertTrue(pixel.matchesMode(CameraProfile.MODE_ASTRO, "Astrofotografie"))
@@ -186,6 +188,50 @@ class CameraProfileTest {
         assertTrue(pixel.eligibleModeChipPatterns.matchesAny("Portrait"))
         assertFalse(pixel.supportsMode("portrait"))
         assertEquals(setOf("photo", "night", "astro"), pixel.supportedModeKeys())
+    }
+
+    // ---- which node is the mode chip ------------------------------------------------------------
+
+    /**
+     * Pixel Camera on a Pixel 7 Pro (Czech, Photo mode, low light), from a uiautomator dump. Three
+     * nodes carry "noční": the mode chip, the minibar's Night Sight icon at the top of the screen,
+     * and the shutter. The minibar icon comes first in the tree, and tapping it opened the
+     * "Nastavení fotek" sheet instead of switching to Night Sight, before the first shot.
+     */
+    private val pixelMinibarNight = "com.google.android.GoogleCamera:id/minibar_item_ext2" to "Noční vidění"
+    private val pixelShutter = "ComposeShutter" to "Vyfotit pomocí nočního vidění"
+    private val pixelNightChip = "com.google.android.GoogleCamera:id/mode_chip_text" to "Přepnout na noční vidění"
+    private val pixelPhotoChip = "com.google.android.GoogleCamera:id/mode_chip_text" to "Fotka"
+
+    @Test
+    fun `only the mode carousel's chip counts as the pixel night mode chip`() {
+        val pixel = CameraProfiles.forPackage("com.google.android.GoogleCamera")
+        val night = CameraProfile.MODE_NIGHT
+
+        assertTrue(pixel.isModeChipFor(night, pixelNightChip.first, pixelNightChip.second))
+        assertTrue(pixel.isModeChipFor(night, pixelNightChip.first, "Noční vidění"))
+        assertFalse(pixel.isModeChipFor(night, pixelMinibarNight.first, pixelMinibarNight.second))
+        assertFalse(pixel.isModeChipFor(night, pixelShutter.first, pixelShutter.second))
+        assertFalse(pixel.isModeChipFor(night, null, "Noční vidění"))
+    }
+
+    @Test
+    fun `a chip of another mode is never the chip for the wanted one`() {
+        val pixel = CameraProfiles.forPackage("com.google.android.GoogleCamera")
+
+        assertTrue(pixel.isModeChipFor(CameraProfile.MODE_PHOTO, pixelPhotoChip.first, pixelPhotoChip.second))
+        assertFalse(pixel.isModeChipFor(CameraProfile.MODE_NIGHT, pixelPhotoChip.first, pixelPhotoChip.second))
+        assertFalse(pixel.isModeChipFor(CameraProfile.MODE_PHOTO, pixelNightChip.first, pixelNightChip.second))
+    }
+
+    @Test
+    fun `a profile that names no chip view id still goes by the label alone`() {
+        val generic = CameraProfiles.generic
+
+        assertTrue(generic.isModeChipFor(CameraProfile.MODE_NIGHT, null, "Night"))
+        assertTrue(generic.isModeChipFor(CameraProfile.MODE_NIGHT, "com.acme.cam:id/anything", "Night"))
+        assertFalse(generic.isModeChipFor(CameraProfile.MODE_NIGHT, null, "Photo"))
+        assertFalse(generic.isModeChipFor(CameraProfile.MODE_ASTRO, null, "Astro"))
     }
 
     @Test

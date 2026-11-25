@@ -103,6 +103,7 @@ class SessionEngine(
     private val busyWaitToken = Any()
     private val watchdogToken = Any()
     private val verifyToken = Any()
+    private val setupToken = Any()
 
     /** Deliberately *not* cancelled by [cancelTimers]: the guard must keep ticking while paused. */
     private val guardToken = Any()
@@ -140,6 +141,25 @@ class SessionEngine(
     private var running = false
     private var paused = false
     private var preShotSetupDone = false
+
+    /** The pre-shot setup is still clicking around the camera app; the first shot waits for it. */
+    private var preShotSetupRunning = false
+
+    /** What the first shot does once a running setup finishes; see [onShotDue]. */
+    private var afterPreShotSetup: (() -> Unit)? = null
+
+    /** When the camera mode was switched; the first shot is held [SessionTiming.MODE_SETTLE_MS] past it. */
+    private var modeSwitchedAtElapsed: Long? = null
+
+    /**
+     * `intervalAfterCapture`: the MediaStore baseline of the capture in flight (null without access),
+     * when its latest tap was dispatched, since when the camera has looked idle, and when the capture
+     * ended — which is what the next shot is scheduled from.
+     */
+    private var captureBaseline: String? = null
+    private var captureTapElapsed = 0L
+    private var captureIdleSinceElapsed: Long? = null
+    private var captureEndedElapsed: Long? = null
 
     /** Why the engine paused itself, or null when the pause came from the user (never auto-resumed). */
     private var autoPauseReason: AutoPauseReason? = null
@@ -244,6 +264,10 @@ class SessionEngine(
         autoPauseReason = null
         lastShotFiredElapsed = null
         preShotSetupDone = false
+        preShotSetupRunning = false
+        afterPreShotSetup = null
+        modeSwitchedAtElapsed = null
+        clearCaptureWait()
         verifyArmed = false
         verifyBaseline = null
         verifyDeadlineElapsed = 0L
@@ -291,6 +315,7 @@ class SessionEngine(
         syncMotionWatch()
         scheduleGuardTick()
         scheduleShot(0)
+        scheduleEarlySetup(now)
     }
 
     /**
@@ -368,6 +393,10 @@ class SessionEngine(
         // The mode chip and the self timer were already dealt with before the process died; running
         // them again would tap around the camera UI for nothing.
         preShotSetupDone = true
+        preShotSetupRunning = false
+        afterPreShotSetup = null
+        modeSwitchedAtElapsed = null
+        clearCaptureWait()
         autoPauseReason = null
         // Nothing was measured in *this* process, so the first reported interval is the planned one
         // rather than a bogus gap spanning however long the process was gone.
@@ -699,6 +728,10 @@ class SessionEngine(
         handler.removeCallbacksAndMessages(busyWaitToken)
         handler.removeCallbacksAndMessages(watchdogToken)
         handler.removeCallbacksAndMessages(verifyToken)
+        handler.removeCallbacksAndMessages(setupToken)
+        // A setup cut short must not leave the first shot parked behind it for good.
+        preShotSetupRunning = false
+        afterPreShotSetup = null
         awaitingShutterResult = false
         shotInFlightIndex = null
         cancelAlarm()
@@ -744,24 +777,80 @@ class SessionEngine(
         // resume path can legitimately ask for the same index again.
         shotInFlightIndex = index
 
-        if (!preShotSetupDone) {
-            preShotSetupDone = true
-            runPreShotSetup { waitForCameraThenFire(index, SystemClock.elapsedRealtime()) }
-        } else {
-            waitForCameraThenFire(index, SystemClock.elapsedRealtime())
+        val fire = { waitForCameraThenFire(index, SystemClock.elapsedRealtime()) }
+        when {
+            // The early setup (see [scheduleEarlySetup]) is still switching the mode: tapping the
+            // shutter now would land in the middle of it.
+            preShotSetupRunning -> afterPreShotSetup = fire
+            !preShotSetupDone -> {
+                handler.removeCallbacksAndMessages(setupToken)
+                startPreShotSetup(fireAfter = fire)
+            }
+            else -> fire()
         }
     }
 
     /**
-     * `adaptiveLongExposureWait`: the interval becomes a *minimum*. While the profile's
-     * long-exposure busy indicators are on screen we poll instead of tapping into a busy camera. With
-     * the flag off, nothing here runs and the shot fires immediately.
+     * Switches the camera mode (and the self timer) as soon as the camera app is in front after
+     * Start, instead of right before the first shot: Pixel Camera needs a few seconds after a switch
+     * to Night Sight before Astro engages, and a mode switched at the shutter press had none.
+     * Polled because the app launched by [start] takes a moment to come up; [onShotDue] runs the
+     * setup itself if the first shot comes first.
+     */
+    private fun scheduleEarlySetup(startedAt: Long) {
+        handler.removeCallbacksAndMessages(setupToken)
+        if (!running || paused || preShotSetupDone || preShotSetupRunning) return
+        if (!SessionTiming.hasPreShotSetup(advanced)) {
+            preShotSetupDone = true
+            return
+        }
+        val wanted = config?.mode?.let { SessionTiming.foregroundPackageFor(it) }
+        if (wanted != null && isForeground(wanted)) {
+            startPreShotSetup(fireAfter = null)
+            return
+        }
+        if (SystemClock.elapsedRealtime() - startedAt > EARLY_SETUP_GIVE_UP_MS) return
+        handler.postAtTime({ scheduleEarlySetup(startedAt) }, setupToken, SystemClock.uptimeMillis() + SETUP_POLL_MS)
+    }
+
+    private fun startPreShotSetup(fireAfter: (() -> Unit)?) {
+        preShotSetupDone = true
+        preShotSetupRunning = true
+        afterPreShotSetup = fireAfter
+        runPreShotSetup {
+            preShotSetupRunning = false
+            val next = afterPreShotSetup
+            afterPreShotSetup = null
+            next?.invoke()
+        }
+    }
+
+    /**
+     * Holds the tap while the camera cannot take it: a freshly switched mode still settling, or (with
+     * `intervalAfterCapture`) a camera that is still busy. Tapping a busy camera is not harmless —
+     * Pixel Camera's shutter reads "Zrušit fotku" during Astro, and a tap cancels the photo.
      */
     private fun waitForCameraThenFire(index: Int, waitStartedAt: Long) {
         if (!running || paused) return
-        if (advanced.adaptiveLongExposureWait && dispatcher.isBusy(profile)) {
-            val waited = SystemClock.elapsedRealtime() - waitStartedAt
-            if (waited < profile.longExposureMaxWaitMs) {
+        val now = SystemClock.elapsedRealtime()
+        val settle = SessionTiming.modeSettleHoldMs(modeSwitchedAtElapsed, now)
+        if (settle > 0L) {
+            // The cadence is kept: the whole series moves by the hold instead of shot 1 coming early.
+            scheduleAnchorElapsed += settle
+            modeSwitchedAtElapsed = null
+            acquireWakeLock(SHOT_WAKE_LOCK_MS)
+            handler.removeCallbacksAndMessages(busyWaitToken)
+            handler.postAtTime(
+                { waitForCameraThenFire(index, waitStartedAt + settle) },
+                busyWaitToken,
+                SystemClock.uptimeMillis() + settle,
+            )
+            return
+        }
+        modeSwitchedAtElapsed = null
+        if (waitsForCapture() && dispatcher.isCameraBusy(profile)) {
+            if (now - waitStartedAt < SessionTiming.CAPTURE_MAX_WAIT_MS) {
+                acquireWakeLock(SHOT_WAKE_LOCK_MS)
                 handler.removeCallbacksAndMessages(busyWaitToken)
                 handler.postAtTime(
                     { waitForCameraThenFire(index, waitStartedAt) },
@@ -773,6 +862,17 @@ class SessionEngine(
             warn(service.getString(R.string.session_warning_long_exposure_timeout), transient = true)
         }
         fireShutter(index, isRetry = false)
+    }
+
+    /** `intervalAfterCapture` applies to a time-lapse only: a periodic tap drives no camera. */
+    private fun waitsForCapture(): Boolean =
+        advanced.intervalAfterCapture && config?.mode is TriggerMode.Timelapse
+
+    private fun clearCaptureWait() {
+        captureBaseline = null
+        captureTapElapsed = 0L
+        captureIdleSinceElapsed = null
+        captureEndedElapsed = null
     }
 
     private fun fireShutter(index: Int, isRetry: Boolean) {
@@ -793,11 +893,19 @@ class SessionEngine(
             // window twice over, and a "no new photo" warning on a camera that works perfectly.
             // Without a baseline this shot is simply not verified, and the warning says exactly that.
             val requested = config.verifyCaptures
-            val readable = requested && verifier.available()
+            // `intervalAfterCapture` needs the baseline too, to see when the photo is finished; only
+            // `verifyCaptures` turns a missing photo into a retry and a deferred count.
+            val readable = (requested || waitsForCapture()) && verifier.available()
             val baseline = if (readable) verifier.newestToken() else null
-            val arming = SessionTiming.verifyArming(requested, verifiable = readable, baseline = baseline)
+            val arming = SessionTiming.verifyArming(
+                requested,
+                verifiable = requested && readable,
+                baseline = baseline,
+            )
             verifyArmed = arming.armsVerification
             verifyBaseline = if (arming.armsVerification) baseline else null
+            captureBaseline = if (waitsForCapture()) baseline else null
+            captureEndedElapsed = null
             if (arming.warnsUnverified) {
                 warn(service.getString(R.string.session_warning_verification_unavailable), transient = true)
             }
@@ -818,6 +926,8 @@ class SessionEngine(
         }
         // Each tap gets its own window: the retry's frame is no faster to land than the first one's.
         if (verifyArmed) verifyDeadlineElapsed = SystemClock.elapsedRealtime() + verifyWindowMs()
+        captureTapElapsed = SystemClock.elapsedRealtime()
+        captureIdleSinceElapsed = null
         val request = ShutterRequest(
             profile = profile,
             calibrated = calibratedTarget,
@@ -897,6 +1007,8 @@ class SessionEngine(
      * this clamp is what keeps a ramp or a re-anchor from breaking that guarantee again.
      */
     private fun postCaptureHoldMs(): Long {
+        // The next shot is scheduled from the end of this capture anyway, so nothing is pushed late.
+        if (waitsForCapture()) return profile.captureLatencyMs
         val schedule = schedule ?: return profile.captureLatencyMs
         val nextTarget = schedule.targetElapsedFor(attemptedShots + 1, scheduleAnchorElapsed)
         return SessionTiming.postCaptureHoldMs(
@@ -914,11 +1026,80 @@ class SessionEngine(
             if (dismissed > 0) Log.d(TAG, "dismissed $dismissed post-capture node(s)")
         }
 
+        if (waitsForCapture()) {
+            awaitCaptureEnd(index, isRetry)
+            return
+        }
         if (!verifyArmed) {
             finishShot()
             return
         }
         awaitCapture(index, isRetry)
+    }
+
+    /**
+     * `intervalAfterCapture`: waits until the capture is finished — its photo is in MediaStore, or
+     * without access the camera is idle again — and only then lets the next shot be scheduled, one
+     * interval after that moment ([finishShot]). Polled; [SessionTiming.captureWaitStep] decides.
+     * Replaces [awaitCapture] for these sessions, keeping its rules: a missing photo is re-tapped
+     * once only with `verifyCaptures` on, and a shot is counted when the wait resolves.
+     */
+    private fun awaitCaptureEnd(index: Int, isRetry: Boolean) {
+        if (!running || paused) return
+        val now = SystemClock.elapsedRealtime()
+        val busy = dispatcher.isCameraBusy(profile)
+        if (busy) {
+            captureIdleSinceElapsed = null
+        } else if (captureIdleSinceElapsed == null) {
+            captureIdleSinceElapsed = now
+        }
+        val baseline = captureBaseline
+        val canSee = baseline != null && verifier.available()
+        val step = SessionTiming.captureWaitStep(
+            frameVisible = canSee && verifier.hasNewImageSince(baseline),
+            canSeeFrames = canSee,
+            cameraBusy = busy,
+            sinceTapMs = now - captureTapElapsed,
+            idleForMs = captureIdleSinceElapsed?.let { now - it } ?: 0L,
+        )
+        when (step) {
+            CaptureWaitStep.WAIT -> {
+                // A capture can run for minutes; the CPU must stay up to see it end.
+                acquireWakeLock(SHOT_WAKE_LOCK_MS)
+                handler.removeCallbacksAndMessages(verifyToken)
+                handler.postAtTime(
+                    { awaitCaptureEnd(index, isRetry) },
+                    verifyToken,
+                    SystemClock.uptimeMillis() + VERIFY_POLL_MS,
+                )
+            }
+
+            CaptureWaitStep.FINISHED -> endCapture(now)
+
+            CaptureWaitStep.TIMED_OUT -> {
+                Log.w(TAG, "shot $index still busy after ${now - captureTapElapsed}ms, carrying on")
+                warn(service.getString(R.string.session_warning_long_exposure_timeout), transient = true)
+                endCapture(now)
+            }
+
+            CaptureWaitStep.NO_FRAME -> when {
+                verifyArmed && !isRetry -> {
+                    Log.w(TAG, "no photo after shot $index although the camera is idle, re-tapping once")
+                    fireShutter(index, isRetry = true)
+                }
+                else -> {
+                    if (verifyArmed) {
+                        warn(service.getString(R.string.session_warning_capture_unverified), transient = true)
+                    }
+                    endCapture(now)
+                }
+            }
+        }
+    }
+
+    private fun endCapture(endedAt: Long) {
+        captureEndedElapsed = endedAt
+        if (verifyArmed) resolveShot(VerifyStep.RESOLVED) else finishShot()
     }
 
     /**
@@ -930,7 +1111,7 @@ class SessionEngine(
      * as missing and re-taps the whole session, which is worse than not verifying at all.
      *
      * Only a window that has fully expired justifies the single re-tap. Waiting for it makes the
-     * interval a minimum for that shot, the same trade-off `adaptiveLongExposureWait` makes, and it
+     * interval a minimum for that shot, the same trade-off `intervalAfterCapture` makes, and it
      * costs nothing on a shot whose frame lands on time: the poll ends the moment the row appears.
      *
      * available() is re-checked so a permission revoked mid-session degrades silently instead of
@@ -1053,7 +1234,28 @@ class SessionEngine(
         shotInFlightIndex = null
         if (evaluateStopConditions()) return
         attemptedShots++
+        captureEndedElapsed?.let { ended -> scheduleFromCaptureEnd(attemptedShots, ended) }
+        captureEndedElapsed = null
         scheduleShot(attemptedShots)
+    }
+
+    /**
+     * `intervalAfterCapture`: moves the anchor so shot [index] is one interval after the capture
+     * before it ended. The series keeps every other rule of the absolute schedule (a ramp still
+     * changes the interval per shot, a restore picks up the stored anchor); only the gap is now
+     * measured from the end of the photo, which is what a minutes-long Astro exposure needs.
+     */
+    private fun scheduleFromCaptureEnd(index: Int, endedAt: Long) {
+        val schedule = schedule ?: return
+        val shift = SessionTiming.anchorShiftAfterCapture(
+            nextTargetElapsed = schedule.targetElapsedFor(index, scheduleAnchorElapsed),
+            captureEndedElapsed = endedAt,
+            intervalMs = schedule.intervalForShot((index - 1).coerceAtLeast(0), elapsedSinceFirstShot(endedAt)),
+        )
+        if (shift > 0L) {
+            scheduleAnchorElapsed += shift
+            Log.i(TAG, "capture before shot $index ended late by ${shift}ms, next shot one interval after it")
+        }
     }
 
     // ---- guard rails ---------------------------------------------------------------------------
@@ -1159,12 +1361,44 @@ class SessionEngine(
         val steps = ArrayList<((() -> Unit)) -> Unit>()
         val mode = advanced.launchCameraMode?.takeIf { it.isNotBlank() }
         if (mode != null) {
-            steps += { next -> dispatcher.selectCameraMode(profile, mode) { next() } }
+            val deadline = SystemClock.elapsedRealtime() + MODE_FIND_TIMEOUT_MS
+            steps += { next -> selectModeUntil(mode, deadline, next) }
         }
         if (advanced.ensureSelfTimerOff) {
             steps += { next -> dispatcher.ensureSelfTimerOff(profile) { next() } }
         }
         runSteps(steps, 0, onDone)
+    }
+
+    /**
+     * Selects [mode], looking again while its chip is not on screen yet: right after a launch the
+     * camera app draws its carousel late, and one look found nothing and switched nothing. A
+     * successful switch starts the settle hold of the first shot.
+     */
+    private fun selectModeUntil(mode: String, deadline: Long, next: () -> Unit) {
+        if (!running || paused) {
+            next()
+            return
+        }
+        dispatcher.selectCameraMode(profile, mode) { result ->
+            when {
+                result == ModeSelection.SWITCHED -> {
+                    modeSwitchedAtElapsed = SystemClock.elapsedRealtime()
+                    Log.i(TAG, "switched the camera to '$mode'")
+                    next()
+                }
+                result == ModeSelection.NOT_FOUND && SystemClock.elapsedRealtime() < deadline ->
+                    handler.postAtTime(
+                        { selectModeUntil(mode, deadline, next) },
+                        setupToken,
+                        SystemClock.uptimeMillis() + SETUP_POLL_MS,
+                    )
+                else -> {
+                    if (result == ModeSelection.NOT_FOUND) Log.w(TAG, "no '$mode' chip found, mode left as it is")
+                    next()
+                }
+            }
+        }
     }
 
     private fun runSteps(steps: List<((() -> Unit)) -> Unit>, index: Int, onDone: () -> Unit) {
@@ -1242,6 +1476,15 @@ class SessionEngine(
         const val LATE_TOLERANCE_MS = 250L
 
         private const val BUSY_POLL_MS = 250L
+
+        /** How often the early setup looks for the camera app in front, and for its mode chip. */
+        private const val SETUP_POLL_MS = 500L
+
+        /** The early setup stops waiting for the camera app here; the first shot then runs it. */
+        private const val EARLY_SETUP_GIVE_UP_MS = 30_000L
+
+        /** How long a mode chip that is not on screen yet is looked for. */
+        private const val MODE_FIND_TIMEOUT_MS = 8_000L
 
         /** How often MediaStore is asked whether the frame landed, while a capture is unverified. */
         private const val VERIFY_POLL_MS = 500L
@@ -1454,6 +1697,21 @@ internal enum class VerifyStep {
     val resolvesShot: Boolean get() = this == RESOLVED || this == GIVE_UP
 }
 
+/** What [SessionTiming.captureWaitStep] decided about the capture in flight. */
+internal enum class CaptureWaitStep {
+    /** The photo is in MediaStore, or (without access) the camera is idle again. */
+    FINISHED,
+
+    /** The camera is still busy, or its photo may still be published: look again shortly. */
+    WAIT,
+
+    /** Idle for the whole grace and still no photo: the tap took nothing (or it is not visible). */
+    NO_FRAME,
+
+    /** Waited [SessionTiming.CAPTURE_MAX_WAIT_MS]: carry on with a warning. */
+    TIMED_OUT,
+}
+
 /**
  * The engine's arithmetic, with no Android in it, so every rule below is unit-testable on the JVM.
  * [SessionEngine] holds the clocks and the handlers; this holds the decisions they feed.
@@ -1478,6 +1736,10 @@ internal object SessionTiming {
      * and took nothing at all until the user brought that app up by hand.
      */
     fun foregroundPackageFor(mode: TriggerMode): String? = mode.targetPackage
+
+    /** Whether the advanced settings ask for anything to be done in the camera app before shot 0. */
+    fun hasPreShotSetup(advanced: AdvancedSettings): Boolean =
+        !advanced.launchCameraMode.isNullOrBlank() || advanced.ensureSelfTimerOff
 
     /** The start delay actually used, given whether the engine just launched the target app. */
     fun startDelayMs(requestedMs: Long, launchedTargetApp: Boolean): Long {
@@ -1535,6 +1797,62 @@ internal object SessionTiming {
         !alreadyRetried -> VerifyStep.RETRY
         else -> VerifyStep.GIVE_UP
     }
+
+    /**
+     * Longest a single capture is waited for with `intervalAfterCapture` on. Astro on a Pixel runs
+     * up to 4 minutes plus processing; past this the camera is assumed stuck and the series goes on.
+     */
+    const val CAPTURE_MAX_WAIT_MS = 10 * 60_000L
+
+    /**
+     * How long an idle camera is given for its photo to appear in MediaStore. A camera app inserts
+     * the row pending at the tap and publishes it when the file is written: on a Pixel 7 Pro that
+     * was ~4 s after the Astro UI came back.
+     */
+    const val CAPTURE_PUBLISH_GRACE_MS = 10_000L
+
+    /**
+     * Time a freshly switched camera mode gets before the first shot. Pixel Camera's Night Sight
+     * engages Astro on its own once the phone is still, which takes a moment after the switch.
+     */
+    const val MODE_SETTLE_MS = 5_000L
+
+    /**
+     * What one look at the camera means while `intervalAfterCapture` waits for a capture to end.
+     *
+     * [canSeeFrames] is false without MediaStore access (or without a baseline); then an idle camera
+     * is the only signal there is. With it, an idle camera still gets [CAPTURE_PUBLISH_GRACE_MS] for
+     * its row, because the row is published after the UI comes back.
+     */
+    fun captureWaitStep(
+        frameVisible: Boolean,
+        canSeeFrames: Boolean,
+        cameraBusy: Boolean,
+        sinceTapMs: Long,
+        idleForMs: Long,
+    ): CaptureWaitStep = when {
+        // A busy camera outranks a seen photo: Pixel Camera inserts its row, pending, at the shutter
+        // press, so a check that sees inserts (a MediaStore observer without READ_MEDIA_IMAGES)
+        // reports the photo minutes before Astro is finished.
+        cameraBusy && sinceTapMs < CAPTURE_MAX_WAIT_MS -> CaptureWaitStep.WAIT
+        frameVisible -> CaptureWaitStep.FINISHED
+        sinceTapMs >= CAPTURE_MAX_WAIT_MS -> CaptureWaitStep.TIMED_OUT
+        !canSeeFrames -> CaptureWaitStep.FINISHED
+        idleForMs < CAPTURE_PUBLISH_GRACE_MS -> CaptureWaitStep.WAIT
+        else -> CaptureWaitStep.NO_FRAME
+    }
+
+    /**
+     * How far to move the schedule anchor so the next shot is one interval after the capture ended:
+     * `captureEnded + interval - nextTarget`, never negative, because a capture that ended early
+     * must not pull the series ahead of its absolute schedule.
+     */
+    fun anchorShiftAfterCapture(nextTargetElapsed: Long, captureEndedElapsed: Long, intervalMs: Long): Long =
+        (captureEndedElapsed + intervalMs - nextTargetElapsed).coerceAtLeast(0L)
+
+    /** How much longer the first shot must wait for a mode switched at [switchedAtElapsed]. */
+    fun modeSettleHoldMs(switchedAtElapsed: Long?, now: Long): Long =
+        if (switchedAtElapsed == null) 0L else (switchedAtElapsed + MODE_SETTLE_MS - now).coerceAtLeast(0L)
 
     /**
      * The interval the session is really delivering: last tap to next shot. Falls back to the

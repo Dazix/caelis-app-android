@@ -42,6 +42,7 @@
                 <action android:name="com.dazix.caelis.debug.STOP_SESSION" />
                 <action android:name="com.dazix.caelis.debug.CLEAR_TAP_LOG" />
                 <action android:name="com.dazix.caelis.debug.SET_AR_DISPLAY_LAG" />
+                <action android:name="com.dazix.caelis.debug.DUMP_NODES" />
             </intent-filter>
         </receiver>
 

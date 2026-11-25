@@ -218,7 +218,7 @@ class SettingsMappingTest {
     fun `every advanced flag survives a round trip`() {
         val settings = AdvancedSettings(
             launchCameraMode = "Night Sight",
-            adaptiveLongExposureWait = true,
+            intervalAfterCapture = true,
             ensureSelfTimerOff = true,
             dismissPostCaptureUi = true,
             keepScreenOn = true,
@@ -243,7 +243,7 @@ class SettingsMappingTest {
     @Test
     fun `a record written before the new flags existed reads as the shared defaults`() {
         val older = mutablePreferencesOf()
-        SettingsMapping.writeAdvanced(older, AdvancedSettings(adaptiveLongExposureWait = true))
+        SettingsMapping.writeAdvanced(older, AdvancedSettings(intervalAfterCapture = true))
         older.removeByName("advanced_keep_screen_on", "advanced_dim_overlay", "advanced_handheld_warning")
 
         val restored = SettingsMapping.readAdvanced(older)
@@ -251,7 +251,7 @@ class SettingsMappingTest {
         assertEquals(AdvancedSettings().keepScreenOn, restored.keepScreenOn)
         assertEquals(AdvancedSettings().dimOverlay, restored.dimOverlay)
         assertEquals(AdvancedSettings().handheldWarning, restored.handheldWarning)
-        assertEquals(true, restored.adaptiveLongExposureWait)
+        assertEquals(true, restored.intervalAfterCapture)
     }
 
     /**

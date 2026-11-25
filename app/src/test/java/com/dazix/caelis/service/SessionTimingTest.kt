@@ -350,6 +350,89 @@ class SessionTimingTest {
         assertTrue(SessionEngine.GUARD_TICK_MS < 30 * 60_000L)
     }
 
+    // ---- interval after capture ---------------------------------------------------------------
+
+    private fun step(
+        frameVisible: Boolean = false,
+        canSeeFrames: Boolean = true,
+        cameraBusy: Boolean = false,
+        sinceTapMs: Long = 5_000L,
+        idleForMs: Long = 0L,
+    ) = SessionTiming.captureWaitStep(frameVisible, canSeeFrames, cameraBusy, sinceTapMs, idleForMs)
+
+    @Test
+    fun `the photo appearing in MediaStore ends the capture`() {
+        assertEquals(CaptureWaitStep.FINISHED, step(frameVisible = true))
+    }
+
+    @Test
+    fun `a photo seen while the camera is still busy does not end the capture`() {
+        // Pixel Camera inserts its row (pending) at the shutter press. A MediaStore observer that
+        // counts INSERTs (PR #68, no READ_MEDIA_IMAGES) sees it then, minutes before Astro is done.
+        assertEquals(CaptureWaitStep.WAIT, step(frameVisible = true, cameraBusy = true, sinceTapMs = 3_000L))
+        assertEquals(
+            CaptureWaitStep.FINISHED,
+            step(frameVisible = true, cameraBusy = true, sinceTapMs = SessionTiming.CAPTURE_MAX_WAIT_MS),
+        )
+    }
+
+    @Test
+    fun `a busy camera is waited for, for minutes`() {
+        // Pixel 7 Pro Astro: the countdown started at 4:01 and the shutter read "Zrušit fotku" the
+        // whole time; a tap there cancels the photo.
+        assertEquals(CaptureWaitStep.WAIT, step(cameraBusy = true, sinceTapMs = 4 * 60_000L))
+    }
+
+    @Test
+    fun `a camera that never finishes is given up on at the cap`() {
+        assertEquals(
+            CaptureWaitStep.TIMED_OUT,
+            step(cameraBusy = true, sinceTapMs = SessionTiming.CAPTURE_MAX_WAIT_MS),
+        )
+    }
+
+    @Test
+    fun `without MediaStore access an idle camera is the end of the capture`() {
+        assertEquals(CaptureWaitStep.FINISHED, step(canSeeFrames = false, cameraBusy = false))
+        assertEquals(CaptureWaitStep.WAIT, step(canSeeFrames = false, cameraBusy = true))
+    }
+
+    @Test
+    fun `an idle camera gets a grace period for its photo to be published`() {
+        // The row appeared ~4 s after the Pixel's UI came back.
+        assertEquals(CaptureWaitStep.WAIT, step(idleForMs = 4_000L))
+        assertEquals(
+            CaptureWaitStep.NO_FRAME,
+            step(idleForMs = SessionTiming.CAPTURE_PUBLISH_GRACE_MS),
+        )
+    }
+
+    @Test
+    fun `the next shot is one interval after the capture ended`() {
+        // Shot 0 at 0, interval 10 s, so shot 1 was due at 10 s; the capture ended at 245 s.
+        assertEquals(245_000L, SessionTiming.anchorShiftAfterCapture(10_000L, 245_000L, 10_000L))
+    }
+
+    @Test
+    fun `a short capture still moves the next shot behind its end`() {
+        // A 2 s capture: the next shot is 2 s later than the absolute schedule would put it.
+        assertEquals(2_000L, SessionTiming.anchorShiftAfterCapture(10_000L, 2_000L, 10_000L))
+    }
+
+    @Test
+    fun `the shift never pulls the series earlier`() {
+        assertEquals(0L, SessionTiming.anchorShiftAfterCapture(30_000L, 2_000L, 10_000L))
+    }
+
+    @Test
+    fun `the first shot holds until the switched mode has settled`() {
+        val switchedAt = 1_000L
+        val settle = SessionTiming.MODE_SETTLE_MS
+        assertEquals(settle - 500L, SessionTiming.modeSettleHoldMs(switchedAt, now = switchedAt + 500L))
+        assertEquals(0L, SessionTiming.modeSettleHoldMs(switchedAt, now = switchedAt + settle))
+        assertEquals(0L, SessionTiming.modeSettleHoldMs(switchedAtElapsed = null, now = 10L))
+    }
+
     @Test
     fun `a paused session still hits its battery and storage limits on the guard tick`() {
         val planner = SessionPlanner(

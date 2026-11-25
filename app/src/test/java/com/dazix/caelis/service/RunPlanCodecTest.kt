@@ -49,7 +49,7 @@ class RunPlanCodecTest {
             ),
             advanced = AdvancedSettings(
                 launchCameraMode = "Night Sight",
-                adaptiveLongExposureWait = true,
+                intervalAfterCapture = true,
                 ensureSelfTimerOff = true,
                 dismissPostCaptureUi = true,
                 keepScreenOn = true,

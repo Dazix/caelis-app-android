@@ -25,6 +25,24 @@ class LaunchModeOptionsTest {
     }
 
     @Test
+    fun `choosing a long exposure mode turns on the interval after capture`() {
+        // Night Sight / Astro run for minutes, and a tap during them cancels the photo.
+        val night = LaunchModeOptions.choose(AdvancedSettings(), CameraProfile.MODE_NIGHT)
+        assertEquals(CameraProfile.MODE_NIGHT, night.launchCameraMode)
+        assertEquals(true, night.intervalAfterCapture)
+        assertEquals(true, LaunchModeOptions.choose(AdvancedSettings(), CameraProfile.MODE_ASTRO).intervalAfterCapture)
+    }
+
+    @Test
+    fun `choosing another mode leaves the interval setting as the user had it`() {
+        val on = AdvancedSettings(intervalAfterCapture = true)
+        assertEquals(true, LaunchModeOptions.choose(on, CameraProfile.MODE_PHOTO).intervalAfterCapture)
+        assertEquals(true, LaunchModeOptions.choose(on, null).intervalAfterCapture)
+        assertEquals(false, LaunchModeOptions.choose(AdvancedSettings(), CameraProfile.MODE_PHOTO).intervalAfterCapture)
+        assertNull(LaunchModeOptions.choose(on, null).launchCameraMode)
+    }
+
+    @Test
     fun `nothing is offered until an app is chosen`() {
         assertTrue(LaunchModeOptions.keysFor(pixel, hasApp = false).isEmpty())
     }
@@ -61,7 +79,7 @@ class LaunchModeOptionsTest {
         val defaults = AdvancedSettings()
 
         assertNull(LaunchModeOptions.selected(defaults, pixel, hasApp = true))
-        assertEquals(false, defaults.adaptiveLongExposureWait)
+        assertEquals(false, defaults.intervalAfterCapture)
         assertEquals(false, defaults.ensureSelfTimerOff)
         assertEquals(false, defaults.dismissPostCaptureUi)
         assertEquals(false, defaults.dimOverlay)

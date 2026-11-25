@@ -26,7 +26,7 @@
       ], "ul": [
         "<strong>Location (precise and approximate).</strong> Used to compute the position of the Sun, the Moon, planets and stars and the terrain horizon for where you stand. Terrain horizons computed for a place, and places you save yourself, are stored in the app's private storage.",
         "<strong>Camera.</strong> The camera picture is shown behind the sky overlay and is used to align the horizon automatically. Frames are processed in memory and are neither saved nor sent.",
-        "<strong>Photos.</strong> If you turn on shot verification, the app reads the date, folder and source app of new photos to confirm that a shot was taken. It does not open, copy or upload the pictures.",
+        "<strong>Photos.</strong> If you turn on shot verification or the interval after the photo is finished and allow photo access, the app reads the date, folder and source app of new photos to confirm that a shot was taken and when it was finished. It does not open, copy or upload the pictures.",
         "<strong>Accessibility service.</strong> The app needs the accessibility permission to press the shutter of your camera app at the intervals you set. It reads which app is in the foreground and the buttons on its screen, only to find and tap the shutter. It does not record, store or send what is on the screen and uses the permission for nothing else.",
         "<strong>Settings.</strong> Your intervalometer settings, calibrations and choices (including your consents) are stored on the phone."
       ]},
@@ -87,7 +87,7 @@
       ], "ul": [
         "<strong>Poloha (přesná i přibližná).</strong> Slouží k výpočtu polohy Slunce, Měsíce, planet a hvězd a terénního horizontu tam, kde stojíte. Horizonty spočítané pro dané místo a místa, která si sami uložíte, se ukládají do soukromého úložiště aplikace.",
         "<strong>Fotoaparát.</strong> Obraz z fotoaparátu se zobrazuje pod oblohou a slouží k automatickému zarovnání horizontu. Snímky se zpracují v paměti, neukládají se a nikam se neposílají.",
-        "<strong>Fotky.</strong> Pokud zapnete ověřování snímků, aplikace čte datum, složku a zdrojovou aplikaci nových fotek, aby potvrdila, že snímek vznikl. Fotky samotné neotevírá, nekopíruje ani nenahrává.",
+        "<strong>Fotky.</strong> Pokud zapnete ověřování snímků nebo interval až po dokončení snímku a povolíte přístup k fotkám, aplikace čte datum, složku a zdrojovou aplikaci nových fotek, aby potvrdila, že snímek vznikl a kdy byl dokončen. Fotky samotné neotevírá, nekopíruje ani nenahrává.",
         "<strong>Služba usnadnění.</strong> Oprávnění usnadnění aplikace potřebuje k mačkání spouště vaší fotoaplikace v nastavených intervalech. Čte, která aplikace je v popředí a jaká tlačítka má na obrazovce, jen aby našla spoušť a stiskla ji. Obsah obrazovky nezaznamenává, neukládá ani neodesílá a k ničemu jinému oprávnění nepoužívá.",
         "<strong>Nastavení.</strong> Nastavení intervalometru, kalibrace a vaše volby (včetně souhlasů) se ukládají v telefonu."
       ]},
@@ -148,7 +148,7 @@
       ], "ul": [
         "<strong>Poloha (presná aj približná).</strong> Slúži na výpočet polohy Slnka, Mesiaca, planét a hviezd a terénneho horizontu tam, kde stojíte. Horizonty vypočítané pre dané miesto a miesta, ktoré si sami uložíte, sa ukladajú do súkromného úložiska aplikácie.",
         "<strong>Fotoaparát.</strong> Obraz z fotoaparátu sa zobrazuje pod oblohou a slúži na automatické zarovnanie horizontu. Snímky sa spracujú v pamäti, neukladajú sa a nikam sa neposielajú.",
-        "<strong>Fotky.</strong> Ak zapnete overovanie snímok, aplikácia číta dátum, priečinok a zdrojovú aplikáciu nových fotiek, aby potvrdila, že snímka vznikla. Fotky samotné neotvára, nekopíruje ani nenahráva.",
+        "<strong>Fotky.</strong> Ak zapnete overovanie snímok alebo interval až po dokončení snímky a povolíte prístup k fotkám, aplikácia číta dátum, priečinok a zdrojovú aplikáciu nových fotiek, aby potvrdila, že snímka vznikla a kedy bola dokončená. Fotky samotné neotvára, nekopíruje ani nenahráva.",
         "<strong>Služba dostupnosti.</strong> Povolenie dostupnosti aplikácia potrebuje na stláčanie spúšte vašej fotoaplikácie v nastavených intervaloch. Číta, ktorá aplikácia je v popredí a aké tlačidlá má na obrazovke, len aby našla spúšť a stlačila ju. Obsah obrazovky nezaznamenáva, neukladá ani neodosiela a na nič iné povolenie nepoužíva.",
         "<strong>Nastavenia.</strong> Nastavenia intervalometra, kalibrácie a vaše voľby (vrátane súhlasov) sa ukladajú v telefóne."
       ]},
@@ -209,7 +209,7 @@
       ], "ul": [
         "<strong>Lokalizacja (dokładna i przybliżona).</strong> Służy do obliczania położenia Słońca, Księżyca, planet i gwiazd oraz horyzontu terenu tam, gdzie stoisz. Horyzonty obliczone dla danego miejsca oraz miejsca zapisane przez Ciebie są przechowywane w prywatnej pamięci aplikacji.",
         "<strong>Aparat.</strong> Obraz z aparatu jest wyświetlany pod niebem i służy do automatycznego wyrównania horyzontu. Klatki są przetwarzane w pamięci, nie są zapisywane ani wysyłane.",
-        "<strong>Zdjęcia.</strong> Jeśli włączysz weryfikację zdjęć, aplikacja odczytuje datę, folder i aplikację źródłową nowych zdjęć, aby potwierdzić, że zdjęcie zostało zrobione. Samych zdjęć nie otwiera, nie kopiuje ani nie przesyła.",
+        "<strong>Zdjęcia.</strong> Jeśli włączysz weryfikację zdjęć lub odstęp od zakończenia zdjęcia i zezwolisz na dostęp do zdjęć, aplikacja odczytuje datę, folder i aplikację źródłową nowych zdjęć, aby potwierdzić, że zdjęcie zostało zrobione i kiedy się zakończyło. Samych zdjęć nie otwiera, nie kopiuje ani nie przesyła.",
         "<strong>Usługa ułatwień dostępu.</strong> Uprawnienie ułatwień dostępu jest potrzebne, aby naciskać spust migawki w Twojej aplikacji aparatu w ustawionych odstępach. Aplikacja odczytuje, która aplikacja jest na pierwszym planie i jakie przyciski ma na ekranie, tylko po to, by znaleźć i nacisnąć spust. Nie rejestruje, nie zapisuje ani nie wysyła zawartości ekranu i nie używa uprawnienia do niczego innego.",
         "<strong>Ustawienia.</strong> Ustawienia interwałometru, kalibracje i Twoje wybory (w tym zgody) są przechowywane na telefonie."
       ]},
@@ -270,7 +270,7 @@
       ], "ul": [
         "<strong>Standort (genau und ungefähr).</strong> Dient zur Berechnung der Position von Sonne, Mond, Planeten und Sternen sowie des Geländehorizonts dort, wo Sie stehen. Für einen Ort berechnete Horizonte und Orte, die Sie selbst speichern, werden im privaten Speicher der App abgelegt.",
         "<strong>Kamera.</strong> Das Kamerabild wird unter dem Himmel angezeigt und dient zur automatischen Ausrichtung des Horizonts. Die Bilder werden im Arbeitsspeicher verarbeitet, weder gespeichert noch gesendet.",
-        "<strong>Fotos.</strong> Wenn Sie die Aufnahmeprüfung einschalten, liest die App Datum, Ordner und Quell-App neuer Fotos, um zu bestätigen, dass eine Aufnahme entstanden ist. Die Fotos selbst öffnet, kopiert oder lädt sie nicht hoch.",
+        "<strong>Fotos.</strong> Wenn Sie die Aufnahmeprüfung oder das Intervall ab fertigem Foto einschalten und den Fotozugriff erlauben, liest die App Datum, Ordner und Quell-App neuer Fotos, um zu bestätigen, dass eine Aufnahme entstanden ist und wann sie fertig war. Die Fotos selbst öffnet, kopiert oder lädt sie nicht hoch.",
         "<strong>Bedienungshilfe.</strong> Die App braucht die Berechtigung für Bedienungshilfen, um den Auslöser Ihrer Kamera-App in den eingestellten Abständen zu drücken. Sie liest, welche App im Vordergrund ist und welche Schaltflächen sie zeigt, nur um den Auslöser zu finden und zu tippen. Sie zeichnet den Bildschirminhalt nicht auf, speichert oder sendet ihn nicht und nutzt die Berechtigung für nichts anderes.",
         "<strong>Einstellungen.</strong> Intervallometer-Einstellungen, Kalibrierungen und Ihre Auswahl (einschließlich Zustimmungen) werden auf dem Telefon gespeichert."
       ]},

@@ -18,6 +18,19 @@ internal object LaunchModeOptions {
         if (hasApp) profile.supportedModeKeys().toList() else emptyList()
 
     /**
+     * The settings after the user picked [key] (null: leave the mode alone). Night and Astro turn
+     * [AdvancedSettings.intervalAfterCapture] on, because their captures run for minutes and a
+     * tap during one cancels it; the user can turn it off again. Nothing turns it off on its own.
+     */
+    fun choose(settings: AdvancedSettings, key: String?): AdvancedSettings {
+        val longExposure = key == CameraProfile.MODE_NIGHT || key == CameraProfile.MODE_ASTRO
+        return settings.copy(
+            launchCameraMode = key,
+            intervalAfterCapture = settings.intervalAfterCapture || longExposure,
+        )
+    }
+
+    /**
      * The stored mode, but only while this profile can actually switch into it. A key kept from a
      * previously chosen app leaves the setting off — the same rule every other advanced extra
      * follows — and the screen says why instead of pretending the mode is armed.
