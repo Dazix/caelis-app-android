@@ -309,7 +309,11 @@ class DocumentationScreenshotsTest {
                     profile = CameraProfiles.forTrigger(TriggerMode.Timelapse("com.google.android.GoogleCamera")),
                     targetLabel = "Pixel Camera",
                     overlayAllowed = true,
+                    mediaPermissionGranted = true,
+                    mediaPermissionPartial = false,
                     onChange = {},
+                    onRequestMediaPermission = {},
+                    onOpenAppSettings = {},
                     onBack = {},
                 )
             }

@@ -19,11 +19,19 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!--
-      Requested at runtime only when capture verification is enabled. READ_MEDIA_IMAGES exists from
-      Android 13; below it the same MediaStore read is READ_EXTERNAL_STORAGE, capped so it is never
-      requested (or shown) where the media permission replaces it. Permissions.photos picks the one.
+      Requested at runtime only when capture verification or the interval after the photo is finished
+      is switched on. READ_MEDIA_IMAGES exists from Android 13; below it the same MediaStore read is
+      READ_EXTERNAL_STORAGE, capped so it is never requested (or shown) where the media permission
+      replaces it. Permissions.photos picks the one.
+
+      READ_MEDIA_VISUAL_USER_SELECTED is what "Select photos" grants on Android 14+. Undeclared, the
+      platform answered that choice in compatibility mode: READ_MEDIA_IMAGES reported *granted*
+      (one-time, until the app went to the background) while MediaStore returned only the picked
+      photos, so the app said "photos permission granted" and could not see a single new frame.
+      Declared, "Select photos" leaves READ_MEDIA_IMAGES denied and is recognised as partial access.
     -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />

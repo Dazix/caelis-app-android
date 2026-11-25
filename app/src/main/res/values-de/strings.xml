@@ -136,11 +136,12 @@
     <string name="setup_min_battery_value">%1$d %%</string>
     <string name="setup_min_free_space">Stopp unter freiem Speicher</string>
     <string name="setup_verify_captures">Aufnahmen überprüfen</string>
-    <string name="setup_verify_captures_desc">Nach jeder Aufnahme prüft die App, ob wirklich ein neues Foto entstanden ist, und warnt Sie, wenn die Kamera-App nicht mehr speichert. Dafür muss sie Ihre Fotomediathek lesen, weshalb Android beim Einschalten nach der Fotoberechtigung fragt. Bleibt die Option aus, wird gar kein Fotozugriff angefordert.</string>
+    <string name="setup_verify_captures_desc">Nach jeder Aufnahme prüft die App, ob wirklich ein neues Foto entstanden ist, und warnt Sie, wenn die Kamera-App nicht mehr speichert. Dafür muss sie Ihre Fotomediathek lesen, weshalb Android beim Einschalten nach Zugriff auf alle Fotos fragt (ausgewählte Fotos reichen nicht). Bleibt die Option aus, wird gar kein Fotozugriff angefordert.</string>
     <string name="setup_verify_permission_needed">Die Überprüfung braucht Zugriff auf alle Fotos, der noch fehlt. Die Sitzung läuft trotzdem weiter und nimmt Fotos auf – sie kann Ihnen nur nicht melden, wenn die Kamera-App nicht mehr speichert.</string>
     <string name="setup_verify_permission_partial">Nur die von Ihnen ausgewählten Fotos sind für die App freigegeben, daher sieht sie die Aufnahmen dieser Sitzung nicht. Öffnen Sie die App-Einstellungen und stellen Sie „Fotos und Videos“ auf „Alle zulassen“.</string>
     <string name="setup_verify_open_settings">App-Einstellungen öffnen</string>
     <string name="setup_verify_permission_granted">Fotoberechtigung erteilt.</string>
+    <string name="setup_verify_turned_off">Prüfung aus: kein Fotozugriff</string>
     <string name="setup_tap_area">Tippziel</string>
     <string name="setup_tap_area_none">Noch nichts kalibriert. Nutzen Sie „Kalibrieren“ auf dem Startbildschirm: einmal tippen für einen einzelnen Punkt oder ein Rechteck für einen Bereich ziehen.</string>
     <string name="setup_tap_area_point">Als einzelner Punkt kalibriert.</string>
@@ -251,7 +252,11 @@
         <item quantity="other">%d Schritte</item>
     </plurals>
     <string name="advanced_interval_after_capture">Intervall ab fertigem Foto</string>
-    <string name="advanced_interval_after_capture_desc">Das nächste Foto folgt erst ein Intervall nach dem Ende des vorherigen, nie währenddessen. Für Nachtsicht und Astro, die Minuten dauern. Das Ende erkennt die App in der Galerie, wenn der Fotozugriff erlaubt ist, sonst am Auslöser der Kamera-App.</string>
+    <string name="advanced_interval_after_capture_desc">Das nächste Foto folgt erst ein Intervall nach dem Ende des vorherigen, nie währenddessen. Für Nachtsicht und Astro, die Minuten dauern. Das Ende erkennt die App in der Galerie, wenn der Zugriff auf alle Fotos erlaubt ist, sonst am Auslöser der Kamera-App.</string>
+    <string name="advanced_photo_access_title">Fotozugriff erlauben?</string>
+    <string name="advanced_photo_access_body">Mit Zugriff auf Ihre Fotos erkennt die App genau, wann die Kamera-App das Foto gespeichert hat, und beginnt erst dann das Intervall. Sie liest nur Datum, Ordner und Quell-App neuer Fotos. Ohne Zugriff funktioniert es weiter und erkennt das Ende am Auslöser der Kamera-App, was weniger zuverlässig ist.</string>
+    <string name="advanced_photo_access_later">Jetzt nicht</string>
+    <string name="advanced_photo_access_missing">Ohne Fotozugriff wird das Ende eines Fotos am Auslöser der Kamera-App erkannt, was weniger zuverlässig ist.</string>
     <string name="advanced_self_timer">Selbstauslöser ausgeschaltet sicherstellen</string>
     <string name="advanced_self_timer_desc">Prüft vor dem Start die Timer-Einstellung der Kamera-App, denn ein Selbstauslöser würde jede Aufnahme verschieben.</string>
     <string name="advanced_dismiss_post_capture">Bildschirme nach Aufnahme schließen</string>

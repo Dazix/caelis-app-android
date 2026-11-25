@@ -2,10 +2,6 @@
 # code. Only ever add lines: the notes of a build are the lines added since the last production
 # release (scripts/release_notes.py). Deleting an old line is fine; editing a released one makes it
 # new again. Every language gets the same lines. At most 500 characters of unreleased notes.
-Virtual places: Sun and night sky from any saved place
-Now in Slovak, Polish and German, and on Android 11 and 12
-Night sky: names never overlap, easier to tap; peaks named on the summit
-Sun: faster camera, steadier horizon, fewer false compass warnings
-Terrain: download size and limit; height above terrain
-Time-lapse: handheld warning; Night and Astro wait for the photo
+Night and Astro: next shot one interval after the photo is done; mode set at start
+Pixel Camera: night mode no longer opens its settings
 Your own camera modes: record the taps and swipes in any camera app

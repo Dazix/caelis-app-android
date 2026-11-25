@@ -749,6 +749,24 @@ fun ProgressRing(
     )
 }
 
+/**
+ * Small print with an icon in front (a warning sign, an info mark), both in [color]. The words carry
+ * the meaning, so the icon has no content description of its own.
+ */
+@Composable
+fun IconText(text: String, icon: ImageVector, color: Color, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.Top) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(text = text, style = MaterialTheme.typography.bodySmall, color = color)
+    }
+}
+
 /** Icon plus words. The words are the state; the icon and the colour only reinforce them. */
 @Composable
 fun StatusChip(text: String, granted: Boolean, muted: Boolean = false) {

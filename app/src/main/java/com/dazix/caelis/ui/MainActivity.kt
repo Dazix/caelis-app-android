@@ -146,16 +146,27 @@ private fun CaelisApp(viewModel: MainViewModel = viewModel()) {
         }
     }
 
-    // The answer is only re-read, never acted on: on this target SDK the dialog always offers
-    // "Select photos", which grants partial access and leaves READ_MEDIA_IMAGES denied. Switching
-    // the toggle off here would silently undo the choice the user just made, so the toggle stays on
-    // and session setup explains what full photo access is still needed for.
-    val mediaLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { viewModel.refreshSystemState() }
-
     val coroutineScope = rememberCoroutineScope()
     val toastHostState = remember(coroutineScope) { AppToastHostState(coroutineScope) }
+
+    // Read from the platform, not from the result map: a request Android no longer shows (refused
+    // twice) answers at once with everything denied, and the state is what the screens show anyway.
+    // A refusal or Back turns capture verification off, which cannot work without photos; the toast
+    // says why, since a request Android skipped showed nothing. "Select photos" keeps it on: from
+    // Android 14 that grants READ_MEDIA_VISUAL_USER_SELECTED only (both are declared; see the
+    // manifest for what happened while only one was), and the screen points to the app's settings.
+    // The interval after capture is never switched off here: it works without photos.
+    val mediaLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        viewModel.refreshSystemState()
+        val now = Permissions.read(context)
+        val access = PhotoAccessPrompt.access(now.readMediaImagesGranted, now.readMediaPartialGranted)
+        if (setup.verifyCaptures && PhotoAccessPrompt.verifyOffAfterAnswer(access)) {
+            viewModel.updateSetup { it.copy(verifyCaptures = false) }
+            Toast.makeText(context, R.string.setup_verify_turned_off, Toast.LENGTH_LONG).show()
+        }
+    }
 
     // Calibration is not an activity result any more: the capture surface is an overlay window put up
     // over the *real* camera app, so it outlives this activity going to the background and reports
@@ -286,7 +297,7 @@ private fun CaelisApp(viewModel: MainViewModel = viewModel()) {
                                 }
                             },
                             onRequestMediaPermission = {
-                                mediaLauncher.launch(Permissions.photos())
+                                mediaLauncher.launch(Permissions.photoRequest())
                             },
                         )
                     }
@@ -441,7 +452,11 @@ private fun CaelisScreen(
             profile = profile,
             targetLabel = setup.targetPackage?.let { setup.targetLabel ?: it },
             overlayAllowed = permissions.canDrawOverlays,
+            mediaPermissionGranted = permissions.readMediaImagesGranted,
+            mediaPermissionPartial = permissions.readMediaPartialGranted,
             onChange = { updated -> viewModel.updateAdvanced { updated } },
+            onRequestMediaPermission = onRequestMediaPermission,
+            onOpenAppSettings = { context.launchSafely(Permissions.appInfo(context)) },
             onBack = viewModel::back,
             targetPackage = setup.targetPackage,
             customModes = customModes,

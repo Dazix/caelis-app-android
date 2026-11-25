@@ -136,11 +136,12 @@
     <string name="setup_min_battery_value">%1$d %%</string>
     <string name="setup_min_free_space">Stop below free space</string>
     <string name="setup_verify_captures">Verify captures</string>
-    <string name="setup_verify_captures_desc">After each shot the app checks that a new photo really appeared, and warns you if the camera app stopped saving. To do that it has to read your photo library, which is why Android asks for the photos permission when you switch this on. Leave it off and no photo access is requested at all.</string>
+    <string name="setup_verify_captures_desc">After each shot the app checks that a new photo really appeared, and warns you if the camera app stopped saving. To do that it has to read your photo library, which is why Android asks for access to all photos when you switch this on (selected photos are not enough). Leave it off and no photo access is requested at all.</string>
     <string name="setup_verify_permission_needed">Verification needs access to all photos and does not have it yet. The session still runs and still takes photos — it just cannot tell you when the camera app stops saving.</string>
     <string name="setup_verify_permission_partial">Only the photos you picked are shared with the app, so it cannot see the frames this session is about to take. Open app settings and set Photos and videos to Allow all.</string>
     <string name="setup_verify_open_settings">Open app settings</string>
     <string name="setup_verify_permission_granted">Photos permission granted.</string>
+    <string name="setup_verify_turned_off">Verification off: no photo access</string>
     <string name="setup_tap_area">Tap target</string>
     <string name="setup_tap_area_none">Nothing calibrated yet. Use Calibrate on the home screen: tap once for a single point, or drag a rectangle for an area.</string>
     <string name="setup_tap_area_point">Calibrated as a single point.</string>
@@ -251,7 +252,11 @@
         <item quantity="other">%d steps</item>
     </plurals>
     <string name="advanced_interval_after_capture">Interval after the photo is finished</string>
-    <string name="advanced_interval_after_capture_desc">The next shot is taken one interval after the previous photo is finished, never during it. For Night Sight and Astro, which take minutes. The end is seen in the photo library when photo access is allowed, otherwise on the camera app’s shutter.</string>
+    <string name="advanced_interval_after_capture_desc">The next shot is taken one interval after the previous photo is finished, never during it. For Night Sight and Astro, which take minutes. The end is seen in the photo library when access to all photos is allowed, otherwise on the camera app’s shutter.</string>
+    <string name="advanced_photo_access_title">Allow photo access?</string>
+    <string name="advanced_photo_access_body">With access to your photos the app sees exactly when the camera app has saved the photo, and only then starts the interval. It reads only the date, folder and source app of new photos. Without access it still works and judges the end by the camera app’s shutter, which is less reliable.</string>
+    <string name="advanced_photo_access_later">Not now</string>
+    <string name="advanced_photo_access_missing">No photo access: the end of a photo is judged by the camera app’s shutter, which is less reliable.</string>
     <string name="advanced_self_timer">Make sure the self-timer is off</string>
     <string name="advanced_self_timer_desc">Checks the camera app\'s timer setting before starting, because a self-timer would offset every frame.</string>
     <string name="advanced_dismiss_post_capture">Dismiss post-capture screens</string>

@@ -50,6 +50,7 @@ case "$TARGET" in
             --tests "com.dazix.caelis.ui.MainViewModelNavigationTest" \
             --tests "com.dazix.caelis.ui.NavigationDestinationTest" \
             --tests "com.dazix.caelis.ui.PermissionsPlatformLevelTest" \
+            --tests "com.dazix.caelis.ui.PhotoAccessPromptTest" \
             --tests "com.dazix.caelis.ui.SetupUiStateTest" \
             --tests "com.dazix.caelis.ui.HomeScrollPolicyTest" \
             --tests "com.dazix.caelis.ui.WaitProgressTest" \

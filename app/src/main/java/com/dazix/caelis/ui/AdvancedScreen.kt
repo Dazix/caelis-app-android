@@ -1,9 +1,22 @@
 package com.dazix.caelis.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.dazix.caelis.R
 import com.dazix.caelis.data.AdvancedSettings
 import com.dazix.caelis.domain.cameramode.CustomCameraMode
@@ -20,12 +33,18 @@ fun AdvancedScreen(
     profile: CameraProfile,
     targetLabel: String?,
     overlayAllowed: Boolean,
+    mediaPermissionGranted: Boolean,
+    mediaPermissionPartial: Boolean,
     onChange: (AdvancedSettings) -> Unit,
+    onRequestMediaPermission: () -> Unit,
+    onOpenAppSettings: () -> Unit,
     onBack: () -> Unit,
     targetPackage: String? = null,
     customModes: List<CustomCameraMode> = emptyList(),
     onManageCustomModes: () -> Unit = {},
 ) {
+    val photoAccess = PhotoAccessPrompt.access(mediaPermissionGranted, mediaPermissionPartial)
+    var explainingPhotoAccess by rememberSaveable { mutableStateOf(false) }
     val appName = targetLabel ?: stringResource(R.string.home_target_app_none)
     val noAppReason = stringResource(R.string.advanced_reason_needs_app)
     val unsupportedReason = stringResource(R.string.advanced_reason_needs_pixel, appName)
@@ -112,8 +131,21 @@ fun AdvancedScreen(
                 checked = settings.intervalAfterCapture && hasApp,
                 enabled = hasApp,
                 disabledReason = noAppReason,
-                onCheckedChange = { onChange(settings.copy(intervalAfterCapture = it)) },
+                onCheckedChange = { checked ->
+                    // On at once: without photo access it still works, by the shutter.
+                    onChange(settings.copy(intervalAfterCapture = checked))
+                    if (PhotoAccessPrompt.explainOnToggle(checked, photoAccess)) {
+                        explainingPhotoAccess = true
+                    }
+                },
             )
+            if (PhotoAccessPrompt.showStatus(settings.intervalAfterCapture, hasApp)) {
+                PhotoAccessStatus(
+                    access = photoAccess,
+                    onRequestMediaPermission = onRequestMediaPermission,
+                    onOpenAppSettings = onOpenAppSettings,
+                )
+            }
 
             val timerSupported = hasApp &&
                 profile.selfTimerOnPatterns.isNotEmpty() &&
@@ -167,6 +199,81 @@ fun AdvancedScreen(
                 disabledReason = overlayReason,
                 onCheckedChange = { onChange(settings.copy(dimOverlay = it)) },
             )
+        }
+    }
+
+    if (explainingPhotoAccess) {
+        AlertDialog(
+            onDismissRequest = { explainingPhotoAccess = false },
+            title = { Text(stringResource(R.string.advanced_photo_access_title)) },
+            text = {
+                Text(
+                    text = stringResource(R.string.advanced_photo_access_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        explainingPhotoAccess = false
+                        if (PhotoAccessPrompt.allowOpensSettings(photoAccess)) {
+                            onOpenAppSettings()
+                        } else {
+                            onRequestMediaPermission()
+                        }
+                    },
+                ) { Text(stringResource(R.string.action_grant)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { explainingPhotoAccess = false }) {
+                    Text(stringResource(R.string.advanced_photo_access_later))
+                }
+            },
+        )
+    }
+}
+
+/**
+ * Says how the end of a photo is seen. Missing access is not an error here (the shutter still tells),
+ * so it is worded as what happens instead and not coloured as a fault. The app settings button is
+ * there because Android stops showing the request after two refusals, and then only settings remain.
+ * After "Select photos" it is the only button: asking again opens just the picker for more photos.
+ */
+@Composable
+private fun PhotoAccessStatus(
+    access: PhotoAccessPrompt.Access,
+    onRequestMediaPermission: () -> Unit,
+    onOpenAppSettings: () -> Unit,
+) {
+    if (access == PhotoAccessPrompt.Access.GRANTED) {
+        StatusChip(text = stringResource(R.string.setup_verify_permission_granted), granted = true)
+        return
+    }
+    // No gap between the text and its buttons (the card spaces by 10 dp): with one the buttons read
+    // as a row of their own rather than as part of this switch's status.
+    Column {
+        val partial = access == PhotoAccessPrompt.Access.PARTIAL
+        IconText(
+            text = stringResource(
+                if (partial) R.string.setup_verify_permission_partial else R.string.advanced_photo_access_missing
+            ),
+            icon = if (partial) AppIcons.Warning else AppIcons.Info,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        // Wraps instead of clipping when the labels grow with the font scale.
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (!PhotoAccessPrompt.allowOpensSettings(access)) {
+                TextButton(onClick = onRequestMediaPermission) {
+                    Text(stringResource(R.string.action_grant))
+                }
+            }
+            TextButton(onClick = onOpenAppSettings) {
+                Text(stringResource(R.string.setup_verify_open_settings))
+            }
         }
     }
 }

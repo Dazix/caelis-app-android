@@ -268,6 +268,9 @@ class NetworkIsolationTest {
                 "android.permission.SCHEDULE_EXACT_ALARM",
                 "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
                 "android.permission.READ_MEDIA_IMAGES",
+                // What "Select photos" grants on Android 14+; undeclared, that choice reported
+                // READ_MEDIA_IMAGES as granted while only the picked photos could be read.
+                "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
                 // READ_MEDIA_IMAGES below Android 13 (minSdk 30); capped, see the test below.
                 "android.permission.READ_EXTERNAL_STORAGE",
                 "android.permission.CAMERA",

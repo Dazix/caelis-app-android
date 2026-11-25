@@ -140,11 +140,12 @@
     <string name="setup_min_battery_value">%1$d %%</string>
     <string name="setup_min_free_space">Zastaviť pod voľným miestom</string>
     <string name="setup_verify_captures">Kontrolovať uložené snímky</string>
-    <string name="setup_verify_captures_desc">Po každej snímke aplikácia skontroluje, že naozaj vznikla nová fotka, a upozorní vás, ak fotoaplikácia prestala ukladať. Kvôli tomu musí čítať vašu galériu, a preto si Android pri zapnutí tejto voľby vypýta oprávnenie na fotky. Ak voľbu necháte vypnutú, o prístup k fotkám sa vôbec nežiada.</string>
+    <string name="setup_verify_captures_desc">Po každej snímke aplikácia skontroluje, že naozaj vznikla nová fotka, a upozorní vás, ak fotoaplikácia prestala ukladať. Kvôli tomu musí čítať vašu galériu, a preto si Android pri zapnutí tejto voľby vypýta prístup ku všetkým fotkám (vybrané fotky nestačia). Ak voľbu necháte vypnutú, o prístup k fotkám sa vôbec nežiada.</string>
     <string name="setup_verify_permission_needed">Kontrola potrebuje prístup ku všetkým fotkám a zatiaľ ho nemá. Séria normálne pobeží a bude fotiť – len vám nepovie, keď fotoaplikácia prestane ukladať.</string>
     <string name="setup_verify_permission_partial">Aplikácia vidí len fotky, ktoré ste vybrali, takže na snímky z tejto série nedosiahne. Otvorte nastavenia aplikácie a pri Fotky a videá zvoľte Povoliť všetko.</string>
     <string name="setup_verify_open_settings">Otvoriť nastavenia aplikácie</string>
     <string name="setup_verify_permission_granted">Oprávnenie na fotky je udelené.</string>
+    <string name="setup_verify_turned_off">Kontrola vypnutá: chýba prístup k fotkám</string>
     <string name="setup_tap_area">Miesto dotyku</string>
     <string name="setup_tap_area_none">Zatiaľ nie je nič skalibrované. Použite Kalibrovať na hlavnej obrazovke: jedno klepnutie uloží bod, ťahaním označíte oblasť.</string>
     <string name="setup_tap_area_point">Skalibrované ako jediný bod.</string>
@@ -259,7 +260,11 @@
         <item quantity="other">%d krokov</item>
     </plurals>
     <string name="advanced_interval_after_capture">Interval až po dokončení snímky</string>
-    <string name="advanced_interval_after_capture_desc">Ďalšia snímka sa nasníma až interval po dokončení predchádzajúcej, nikdy počas nej. Pre nočný režim a astro, ktoré trvajú minúty. Koniec spozná v galérii, ak je povolený prístup k fotkám, inak na spúšti fotoaparátu.</string>
+    <string name="advanced_interval_after_capture_desc">Ďalšia snímka sa nasníma až interval po dokončení predchádzajúcej, nikdy počas nej. Pre nočný režim a astro, ktoré trvajú minúty. Koniec spozná v galérii, ak je povolený prístup ku všetkým fotkám, inak na spúšti fotoaparátu.</string>
+    <string name="advanced_photo_access_title">Povoliť prístup k fotkám?</string>
+    <string name="advanced_photo_access_body">S prístupom k fotkám aplikácia presne spozná, kedy fotoaparát snímku uložil, a až potom začne počítať interval. Číta len dátum, priečinok a zdrojovú aplikáciu nových fotiek. Bez prístupu funguje ďalej a koniec snímky odhaduje podľa spúšte fotoaparátu, čo je menej spoľahlivé.</string>
+    <string name="advanced_photo_access_later">Teraz nie</string>
+    <string name="advanced_photo_access_missing">Bez prístupu k fotkám sa koniec snímky odhaduje podľa spúšte fotoaparátu, čo je menej spoľahlivé.</string>
     <string name="advanced_self_timer">Skontrolovať vypnutú samospúšť</string>
     <string name="advanced_self_timer_desc">Pred spustením overí nastavenie samospúšte vo fotoaplikácii, pretože samospúšť by posunula každú snímku.</string>
     <string name="advanced_dismiss_post_capture">Zatvárať obrazovky po snímke</string>
