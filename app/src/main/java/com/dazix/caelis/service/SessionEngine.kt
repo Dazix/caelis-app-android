@@ -15,6 +15,7 @@ import com.dazix.caelis.R
 import com.dazix.caelis.data.AdvancedSettings
 import com.dazix.caelis.data.SessionRepository
 import com.dazix.caelis.data.SettingsStore
+import com.dazix.caelis.domain.cameramode.CustomModeKey
 import com.dazix.caelis.domain.IntervalSchedule
 import com.dazix.caelis.domain.SessionConfig
 import com.dazix.caelis.domain.SessionPlanner
@@ -1355,12 +1356,16 @@ class SessionEngine(
      * touches nothing.
      *
      * `launchCameraMode` holds a **mode key** ([CameraProfile.MODE_PHOTO], `MODE_NIGHT`,
-     * `MODE_ASTRO`), never a label — the profile owns the localized labels.
+     * `MODE_ASTRO`), never a label — the profile owns the localized labels — or `custom:<id>` for a
+     * mode the user recorded ([CustomModeKey]).
      */
     private fun runPreShotSetup(onDone: () -> Unit) {
         val steps = ArrayList<((() -> Unit)) -> Unit>()
         val mode = advanced.launchCameraMode?.takeIf { it.isNotBlank() }
-        if (mode != null) {
+        val customId = CustomModeKey.idOf(mode)
+        if (customId != null) {
+            steps += { next -> replayCustomMode(customId, next) }
+        } else if (mode != null) {
             val deadline = SystemClock.elapsedRealtime() + MODE_FIND_TIMEOUT_MS
             steps += { next -> selectModeUntil(mode, deadline, next) }
         }
@@ -1397,6 +1402,47 @@ class SessionEngine(
                     if (result == ModeSelection.NOT_FOUND) Log.w(TAG, "no '$mode' chip found, mode left as it is")
                     next()
                 }
+            }
+        }
+    }
+
+    /**
+     * Replays the mode the user recorded. Read from the settings here rather than carried in the run
+     * plan, so a restored run replays what is stored now. A mode that is gone, belongs to another app
+     * or stops at a step does not stop the session: it shoots in whatever mode the camera is in, and
+     * says so, where the built-in switch used to fail without a word.
+     */
+    private fun replayCustomMode(id: String, next: () -> Unit) {
+        val wantedPackage = config?.mode?.targetPackage
+        scope.launch {
+            val mode = settings.customMode(id)
+            if (!running || paused) {
+                next()
+                return@launch
+            }
+            if (mode == null || mode.packageName != wantedPackage) {
+                Log.w(TAG, "recorded mode $id is not stored for $wantedPackage")
+                warn(service.getString(R.string.session_warning_custom_mode_missing))
+                next()
+                return@launch
+            }
+            val deadline = SystemClock.uptimeMillis() + MODE_FIND_TIMEOUT_MS
+            dispatcher.replayCustomMode(mode, deadline, isActive = { running && !paused }) { result ->
+                Log.i(TAG, "recorded mode '${mode.name}': $result")
+                val failedStep = when (result) {
+                    CustomReplayResult.Switched -> {
+                        modeSwitchedAtElapsed = SystemClock.elapsedRealtime()
+                        null
+                    }
+                    CustomReplayResult.Already, CustomReplayResult.Cancelled -> null
+                    is CustomReplayResult.StepNotFound -> result.index
+                    is CustomReplayResult.ScreenMismatch -> result.index
+                    is CustomReplayResult.GestureRejected -> result.index
+                }
+                if (failedStep != null) {
+                    warn(service.getString(R.string.session_warning_custom_mode_failed, mode.name, failedStep + 1))
+                }
+                next()
             }
         }
     }
@@ -1484,7 +1530,7 @@ class SessionEngine(
         private const val EARLY_SETUP_GIVE_UP_MS = 30_000L
 
         /** How long a mode chip that is not on screen yet is looked for. */
-        private const val MODE_FIND_TIMEOUT_MS = 8_000L
+        const val MODE_FIND_TIMEOUT_MS = 8_000L
 
         /** How often MediaStore is asked whether the frame landed, while a capture is unverified. */
         private const val VERIFY_POLL_MS = 500L

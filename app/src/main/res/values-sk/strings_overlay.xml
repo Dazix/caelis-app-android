@@ -43,6 +43,25 @@
     <string name="ovl_calib_saved_area">Oblasť spúšte uložená.</string>
     <string name="ovl_calib_timed_out">Kalibrácia zrušená — nič ste neoznačili.</string>
     <string name="ovl_calib_unavailable">Kalibráciu sa nepodarilo spustiť. Skúste to znova z aplikácie.</string>
+    <string name="ovl_rec_instruction">Prepnite %1$s do režimu ako zvyčajne: ťuknutím a ťahaním. Každý krok sa odovzdá aplikácii a zapíše. Potom stlačte Hotovo.</string>
+    <string name="ovl_rec_instruction_not_launched">Aplikáciu %1$s sa nepodarilo otvoriť. Prepnite sa do nej sami, naklikajte režim a stlačte Hotovo.</string>
+    <string name="ovl_rec_cancel">Zrušiť</string>
+    <string name="ovl_rec_undo">Odobrať posledný</string>
+    <string name="ovl_rec_done">Hotovo</string>
+    <string name="ovl_rec_timed_out">Nahrávanie bolo po 10 minútach zrušené.</string>
+    <string name="ovl_rec_service_lost">Služba dostupnosti je vypnutá alebo beží séria; nahrávanie skončilo.</string>
+    <string name="ovl_rec_too_many_steps">Viac krokov režim mať nemôže. Stlačte Hotovo.</string>
+    <string name="ovl_rec_shutter_refused">To je spúšť. Nezaznamená sa, inak by každá séria začala fotkou.</string>
+    <string name="ovl_rec_gesture_failed">Krok sa k aplikácii fotoaparátu nedostal a nezaznamenal sa. Skúste ho znova.</string>
+    <string name="ovl_rec_undone">Posledný krok odobratý. Vráťte fotoaparát do stavu pred ním.</string>
+    <string name="ovl_rec_nothing">Zatiaľ nič nenahrané. Najprv ťuknite alebo ťahajte v aplikácii fotoaparátu.</string>
+    <string name="ovl_rec_saved">Režim nahraný. Pomenujte ho a uložte.</string>
+    <plurals name="ovl_rec_steps">
+        <item quantity="one">Nahrávanie: %d krok</item>
+        <item quantity="few">Nahrávanie: %d kroky</item>
+        <item quantity="many">Nahrávanie: %d kroku</item>
+        <item quantity="other">Nahrávanie: %d krokov</item>
+    </plurals>
 
     <string name="ovl_notif_channel_name">Bežiaca séria</string>
     <string name="ovl_notif_channel_desc">Počet snímok a čas do ďalšej snímky počas bežiacej série.</string>

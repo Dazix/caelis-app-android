@@ -1,3 +1,4 @@
 # "What's new" on Google Play. See en-US.txt for the rules; the lines here translate it line by line.
 Noční a astro: další snímek až interval po dokončení; režim hned po startu
 Pixel Camera: noční režim už neotevírá nastavení
+Vlastní režimy fotoaparátu: nahrajte klepnutí a tažení v jakékoli aplikaci

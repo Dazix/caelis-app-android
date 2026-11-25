@@ -171,6 +171,11 @@
             android:name=".overlay.CalibrationOverlayService"
             android:exported="false" />
 
+        <!-- Records a camera mode over the camera app, like calibration; not exported. -->
+        <service
+            android:name=".overlay.ModeRecordingService"
+            android:exported="false" />
+
         <service
             android:name=".service.ShutterAccessibilityService"
             android:exported="true"

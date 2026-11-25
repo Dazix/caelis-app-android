@@ -48,6 +48,25 @@
     <string name="ovl_calib_saved_area">Oblast spouště uložena.</string>
     <string name="ovl_calib_timed_out">Kalibrace zrušena — nic jste neoznačili.</string>
     <string name="ovl_calib_unavailable">Kalibraci se nepodařilo spustit. Zkuste to znovu z aplikace.</string>
+    <string name="ovl_rec_instruction">Přepněte %1$s do režimu jako obvykle: klepáním a tažením. Každý krok se předá aplikaci a zapíše. Pak stiskněte Hotovo.</string>
+    <string name="ovl_rec_instruction_not_launched">Aplikaci %1$s se nepodařilo otevřít. Přepněte se do ní sami, naklikejte režim a stiskněte Hotovo.</string>
+    <string name="ovl_rec_cancel">Zrušit</string>
+    <string name="ovl_rec_undo">Odebrat poslední</string>
+    <string name="ovl_rec_done">Hotovo</string>
+    <string name="ovl_rec_timed_out">Nahrávání bylo po 10 minutách zrušeno.</string>
+    <string name="ovl_rec_service_lost">Služba zpřístupnění je vypnutá nebo běží série; nahrávání skončilo.</string>
+    <string name="ovl_rec_too_many_steps">Víc kroků režim mít nemůže. Stiskněte Hotovo.</string>
+    <string name="ovl_rec_shutter_refused">To je spoušť. Nezaznamená se, jinak by každá série začala fotkou.</string>
+    <string name="ovl_rec_gesture_failed">Krok se k aplikaci fotoaparátu nedostal a nezaznamenal se. Zkuste ho znovu.</string>
+    <string name="ovl_rec_undone">Poslední krok odebrán. Vraťte fotoaparát do stavu před ním.</string>
+    <string name="ovl_rec_nothing">Zatím nic nenahráno. Nejdřív klepněte nebo táhněte v aplikaci fotoaparátu.</string>
+    <string name="ovl_rec_saved">Režim nahrán. Pojmenujte ho a uložte.</string>
+    <plurals name="ovl_rec_steps">
+        <item quantity="one">Nahrávání: %d krok</item>
+        <item quantity="few">Nahrávání: %d kroky</item>
+        <item quantity="many">Nahrávání: %d kroku</item>
+        <item quantity="other">Nahrávání: %d kroků</item>
+    </plurals>
 
     <string name="ovl_notif_channel_name">Běžící série</string>
     <string name="ovl_notif_channel_desc">Počet snímků a čas do dalšího snímku během běžící série.</string>

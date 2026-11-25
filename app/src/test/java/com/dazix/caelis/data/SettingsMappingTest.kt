@@ -13,6 +13,9 @@ import com.dazix.caelis.domain.SessionConfig
 import com.dazix.caelis.domain.StopConditions
 import com.dazix.caelis.domain.TapTarget
 import com.dazix.caelis.domain.TriggerMode
+import com.dazix.caelis.domain.cameramode.CustomCameraMode
+import com.dazix.caelis.domain.cameramode.CustomModeKey
+import com.dazix.caelis.domain.cameramode.RecordedStep
 import com.dazix.caelis.domain.horizon.DownloadMode
 import com.dazix.caelis.domain.nightsky.ConstellationArtOpacity
 import com.dazix.caelis.overlay.OverlayOptions
@@ -212,6 +215,37 @@ class SettingsMappingTest {
         assertEquals(DownloadMode.NEVER, HorizonSettings(networkConsent = false, autoDownload = true).downloadMode)
         assertEquals(DownloadMode.AUTOMATIC, HorizonSettings(networkConsent = true, autoDownload = true).downloadMode)
         assertEquals(DownloadMode.ON_DEMAND, HorizonSettings(networkConsent = true, autoDownload = false).downloadMode)
+    }
+
+    @Test
+    fun `recorded modes are added, replaced in place and deleted`() {
+        val prefs = mutablePreferencesOf()
+        val tap = RecordedStep.Tap(0.5f, 0.8f, null, 300L)
+        val night = CustomCameraMode("a1", "Noc", "com.example.cam", "Cam", listOf(tap), naturalWidthPx = 1080, naturalHeightPx = 2400)
+        val astro = night.copy(id = "b2", name = "Astro")
+        assertTrue(SettingsMapping.readCustomModes(prefs).isEmpty())
+
+        SettingsMapping.putCustomMode(prefs, night)
+        SettingsMapping.putCustomMode(prefs, astro)
+        SettingsMapping.putCustomMode(prefs, night.copy(name = "Noc 2"))
+        assertEquals(listOf(night.copy(name = "Noc 2"), astro), SettingsMapping.readCustomModes(prefs))
+
+        SettingsMapping.deleteCustomMode(prefs, "a1")
+        assertEquals(listOf(astro), SettingsMapping.readCustomModes(prefs))
+    }
+
+    @Test
+    fun `deleting the mode the session launches into clears that setting, another mode does not`() {
+        val prefs = mutablePreferencesOf()
+        val tap = RecordedStep.Tap(0.5f, 0.8f, null, 300L)
+        SettingsMapping.putCustomMode(prefs, CustomCameraMode("a1", "Noc", "p", "P", listOf(tap)))
+        SettingsMapping.putCustomMode(prefs, CustomCameraMode("b2", "Astro", "p", "P", listOf(tap)))
+        SettingsMapping.writeAdvanced(prefs, AdvancedSettings(launchCameraMode = CustomModeKey.format("a1")))
+
+        SettingsMapping.deleteCustomMode(prefs, "b2")
+        assertEquals("custom:a1", SettingsMapping.readAdvanced(prefs).launchCameraMode)
+        SettingsMapping.deleteCustomMode(prefs, "a1")
+        assertNull(SettingsMapping.readAdvanced(prefs).launchCameraMode)
     }
 
     @Test

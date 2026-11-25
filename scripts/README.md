@@ -260,7 +260,7 @@ Extras: `target_package` (string), `interval_ms`, `start_delay_ms`, `max_shots`,
 
 The advanced, device-specific behaviour is reachable too - `--ez` or `--es`, all default false:
 `verify_captures`, `adaptive_long_exposure_wait`, `ensure_self_timer_off`, `dismiss_post_capture_ui`,
-plus `--es launch_camera_mode <name>`. `adaptive_long_exposure_wait` keeps its old name and now
+plus `--es launch_camera_mode <name>` (a profile key such as `night`, or `custom:<id>` for a recorded mode). `adaptive_long_exposure_wait` keeps its old name and now
 switches on **Interval after the photo is finished** (`intervalAfterCapture`). Without them a scripted session would be testing a
 configuration no user shoots in: a Pixel decides by itself to spend ~3 s on a Night Sight frame and
 ignores a shutter tap that arrives mid-capture.

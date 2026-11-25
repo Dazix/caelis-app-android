@@ -35,6 +35,7 @@ case "$TARGET" in
             --tests "com.dazix.caelis.domain.IntervalScheduleTest" \
             --tests "com.dazix.caelis.domain.SessionPlannerTest" \
             --tests "com.dazix.caelis.domain.stability.*" \
+            --tests "com.dazix.caelis.domain.cameramode.*" \
             --tests "com.dazix.caelis.data.SettingsMappingTest" \
             --tests "com.dazix.caelis.res.*" \
             --tests "com.dazix.caelis.NetworkIsolationTest" \
@@ -44,6 +45,7 @@ case "$TARGET" in
             --tests "com.dazix.caelis.ReleaseBuildTest" \
             --tests "com.dazix.caelis.ui.AccessibilityDisclosureTest" \
             --tests "com.dazix.caelis.ui.CalibrationResolutionTest" \
+            --tests "com.dazix.caelis.ui.CustomModeDraftTest" \
             --tests "com.dazix.caelis.ui.LaunchModeOptionsTest" \
             --tests "com.dazix.caelis.ui.MainViewModelNavigationTest" \
             --tests "com.dazix.caelis.ui.NavigationDestinationTest" \

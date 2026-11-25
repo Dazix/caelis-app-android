@@ -11,6 +11,8 @@
          same thing as session_warning_capture_unverified, which says a photo is actually missing. -->
     <string name="session_warning_verification_unavailable">Ihre Fotomediathek konnte nicht gelesen werden, daher wurde diese Aufnahme nicht überprüft.</string>
     <string name="session_warning_long_exposure_timeout">Die Kamera ist noch beschäftigt; es wird trotzdem ausgelöst.</string>
+    <string name="session_warning_custom_mode_missing">Der aufgenommene Kameramodus fehlt; es wird im aktuellen Modus ausgelöst.</string>
+    <string name="session_warning_custom_mode_failed">Modus „%1$s“: Schritt %2$d nicht gefunden. Modus neu aufnehmen.</string>
     <string name="session_warning_inexact_alarms">Exakte Alarme sind nicht erlaubt, daher können lange Intervalle verspätet auslösen.</string>
     <string name="session_stopped_service_lost">Der Bedienungshilfendienst wurde ausgeschaltet, daher wurde die Sitzung beendet.</string>
 </resources>

@@ -4,3 +4,4 @@
 # new again. Every language gets the same lines. At most 500 characters of unreleased notes.
 Night and Astro: next shot one interval after the photo is done; mode set at start
 Pixel Camera: night mode no longer opens its settings
+Your own camera modes: record the taps and swipes in any camera app

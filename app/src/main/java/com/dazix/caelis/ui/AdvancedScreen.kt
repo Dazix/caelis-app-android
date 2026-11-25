@@ -19,6 +19,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dazix.caelis.R
 import com.dazix.caelis.data.AdvancedSettings
+import com.dazix.caelis.domain.cameramode.CustomCameraMode
+import com.dazix.caelis.domain.cameramode.CustomModeKey
 import com.dazix.caelis.service.CameraProfile
 
 /**
@@ -37,6 +39,9 @@ fun AdvancedScreen(
     onRequestMediaPermission: () -> Unit,
     onOpenAppSettings: () -> Unit,
     onBack: () -> Unit,
+    targetPackage: String? = null,
+    customModes: List<CustomCameraMode> = emptyList(),
+    onManageCustomModes: () -> Unit = {},
 ) {
     val photoAccess = PhotoAccessPrompt.access(mediaPermissionGranted, mediaPermissionPartial)
     var explainingPhotoAccess by rememberSaveable { mutableStateOf(false) }
@@ -59,49 +64,63 @@ fun AdvancedScreen(
         // The modes come from the profile, never from a literal here: a chip is labelled in the
         // device language ("Night Sight" / "Noční vidění"), so only the profile's own aliases can
         // find it. The UI stores the profile's stable key and shows a localized name for it.
+        // Recorded modes work in any camera app, so with an app chosen the section is always usable;
+        // only the chosen app's own recordings are offered.
         val modeKeys = LaunchModeOptions.keysFor(profile, hasApp)
-        val modeSupported = modeKeys.isNotEmpty()
-        val chosenMode = LaunchModeOptions.selected(settings, profile, hasApp)
+        val custom = LaunchModeOptions.customFor(customModes, targetPackage.takeIf { hasApp })
+        val chosenMode = LaunchModeOptions.selected(settings, profile, hasApp, custom)
         SectionCard(
             title = stringResource(R.string.advanced_launch_mode),
             subtitle = stringResource(R.string.advanced_launch_mode_desc),
         ) {
-            if (!modeSupported) {
+            val stored = settings.launchCameraMode?.takeIf { it.isNotBlank() }
+            if (!hasApp) {
                 Text(
-                    text = if (hasApp) {
-                        stringResource(R.string.advanced_launch_mode_unavailable, appName)
+                    text = noAppReason,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            } else if (stored != null && chosenMode == null) {
+                // Stored for another app, or a recording since deleted: it is off, and says so.
+                Text(
+                    text = if (CustomModeKey.idOf(stored) != null) {
+                        stringResource(R.string.advanced_launch_mode_custom_missing, appName)
                     } else {
-                        noAppReason
+                        stringResource(R.string.advanced_launch_mode_unsupported, modeLabel(stored), appName)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                 )
-            } else if (settings.launchCameraMode != null && chosenMode == null) {
-                // Stored from an app whose profile knew that mode; this one does not, so it is off.
-                Text(
-                    text = stringResource(
-                        R.string.advanced_launch_mode_unsupported,
-                        modeLabel(settings.launchCameraMode),
-                        appName,
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                )
+            } else if (modeKeys.isEmpty() && custom.isEmpty()) {
+                InfoNote(text = stringResource(R.string.advanced_launch_mode_unavailable, appName))
             }
             ChoiceRow(
                 title = stringResource(R.string.advanced_launch_mode_none),
                 selected = chosenMode == null,
-                enabled = modeSupported,
+                enabled = hasApp,
                 onSelect = { onChange(LaunchModeOptions.choose(settings, null)) },
             )
             modeKeys.forEach { key ->
                 ChoiceRow(
                     title = modeLabel(key),
                     selected = chosenMode == key,
-                    enabled = modeSupported,
                     onSelect = { onChange(LaunchModeOptions.choose(settings, key)) },
                 )
             }
+            custom.forEach { mode ->
+                ChoiceRow(
+                    title = mode.name,
+                    description = stringResource(R.string.advanced_launch_mode_custom_desc),
+                    selected = chosenMode == mode.key,
+                    onSelect = { onChange(LaunchModeOptions.choose(settings, mode.key, custom)) },
+                )
+            }
+            ListRowButton(
+                title = stringResource(R.string.advanced_launch_mode_manage),
+                subtitle = stringResource(R.string.advanced_launch_mode_manage_desc),
+                icon = AppIcons.Edit,
+                onClick = onManageCustomModes,
+            )
         }
 
         SectionCard {
@@ -269,6 +288,12 @@ private val MODE_LABELS: Map<String, Int> = mapOf(
     CameraProfile.MODE_NIGHT to R.string.advanced_launch_mode_night,
     CameraProfile.MODE_ASTRO to R.string.advanced_launch_mode_astro,
 )
+
+@Composable
+internal fun launchModeName(mode: LaunchModeOptions.InForce): String = when (mode) {
+    is LaunchModeOptions.InForce.Builtin -> modeLabel(mode.key)
+    is LaunchModeOptions.InForce.Recorded -> mode.mode.name
+}
 
 @Composable
 private fun modeLabel(key: String): String =

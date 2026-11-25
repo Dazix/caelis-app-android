@@ -16,6 +16,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 from datetime import date
 from pathlib import Path
 
@@ -36,6 +37,18 @@ LINK = re.compile(r"\[([^\]]+)\]\(((?:https://|mailto:)[^)\s\"<>]+)\)")
 # The privacy policy, linked from the Play listing. Google checks that it names the app and the
 # developer exactly as the listing does.
 PRIVACY = "privacy/"
+# "Last updated" is the day the policy's text last reached main, read from git, so it cannot be
+# forgotten or set before the text was live (a hand-set "effective from" stayed on 19 November
+# after a change merged on the 25th). The first publication date is fixed in privacy.json.
+POLICY_FILE = "site/privacy.json"
+MONTHS = {
+    "en": "January February March April May June July August September October November December",
+    "cs": "ledna února března dubna května června července srpna září října listopadu prosince",
+    "sk": "januára februára marca apríla mája júna júla augusta septembra októbra novembra decembra",
+    "pl": "stycznia lutego marca kwietnia maja czerwca lipca sierpnia września października listopada grudnia",
+    "de": "Januar Februar März April Mai Juni Juli August September Oktober November Dezember",
+}
+DATE_FORMAT = {"en": "{d} {m} {y}", "cs": "{d}. {m} {y}", "sk": "{d}. {m} {y}", "pl": "{d} {m} {y}", "de": "{d}. {m} {y}"}
 
 
 def url_for(lang: str, page: str = "") -> str:
@@ -138,8 +151,37 @@ def render(template: str, lang: str, strings: dict) -> str:
     return fill(template, values, s)
 
 
-def render_privacy(template: str, lang: str, strings: dict, policy: dict) -> str:
-    p = policy[lang]
+def policy_updated() -> date:
+    """The day of the last commit on the first-parent line that changed the policy's texts.
+
+    On main that is the merge of the pull request, the day the page was deployed with it. Only
+    privacy.json counts: a change of the template or of this script does not alter the policy.
+    """
+    def git(*args: str) -> str:
+        return subprocess.run(["git", "-C", str(ROOT), *args], check=True, capture_output=True,
+                              text=True).stdout.strip()
+
+    try:
+        shallow = git("rev-parse", "--is-shallow-repository") == "true"
+        day = git("log", "-1", "--first-parent", "--format=%cs", "--", POLICY_FILE)
+    except (OSError, subprocess.CalledProcessError):
+        # A copy of the sources without git: nothing to read the date from.
+        return date.today()
+    if shallow:
+        # The oldest fetched commit looks like it added every file, so the date would be wrong.
+        raise SystemExit("build_site: shallow clone, the policy date needs the full history (fetch-depth: 0)")
+    return date.fromisoformat(day) if day else date.today()
+
+
+def long_date(lang: str, day: date) -> str:
+    return DATE_FORMAT[lang].format(d=day.day, m=MONTHS[lang].split()[day.month - 1], y=day.year)
+
+
+def render_privacy(template: str, lang: str, strings: dict, policy: dict, updated: date) -> str:
+    p = dict(policy[lang])
+    if "{date}" not in p["updated"]:
+        raise SystemExit(f"privacy {lang}: 'updated' has no {{date}}")
+    p["updated"] = p["updated"].replace("{date}", long_date(lang, updated))
     missing = set(policy[DEFAULT]) - set(p)
     if missing:
         raise SystemExit(f"privacy {lang}: missing strings {sorted(missing)}")
@@ -218,10 +260,11 @@ def main() -> None:
         print(target.relative_to(ROOT))
     privacy_template = (SRC / "privacy.html").read_text(encoding="utf-8")
     policy = json.loads((SRC / "privacy.json").read_text(encoding="utf-8"))
+    updated = policy_updated()
     for lang in LANGS:
         target = OUT / ("" if lang == DEFAULT else lang) / PRIVACY / "index.html"
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(render_privacy(privacy_template, lang, strings, policy), encoding="utf-8")
+        target.write_text(render_privacy(privacy_template, lang, strings, policy, updated), encoding="utf-8")
         print(target.relative_to(ROOT))
     (OUT / "sitemap.xml").write_text(sitemap(), encoding="utf-8")
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {BASE}sitemap.xml\n", encoding="utf-8")

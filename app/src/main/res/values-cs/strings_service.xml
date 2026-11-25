@@ -9,6 +9,8 @@
     <string name="session_warning_capture_unverified">Po posledním snímku se neobjevila žádná nová fotka.</string>
     <string name="session_warning_verification_unavailable">Fotky v telefonu se nepodařilo přečíst, snímek proto nebyl zkontrolovaný.</string>
     <string name="session_warning_long_exposure_timeout">Fotoaparát stále pracuje; snímek se přesto pořídí.</string>
+    <string name="session_warning_custom_mode_missing">Nahraný režim fotoaparátu už neexistuje; fotí se v aktuálním režimu.</string>
+    <string name="session_warning_custom_mode_failed">Režim „%1$s“: krok %2$d nebyl nalezen. Nahrajte režim znovu.</string>
     <string name="session_warning_inexact_alarms">Přesné časovače nejsou povolené, dlouhé intervaly se mohou zpozdit.</string>
     <string name="session_stopped_service_lost">Služba přístupnosti byla vypnutá, série se zastavila.</string>
 </resources>

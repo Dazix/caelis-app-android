@@ -1,3 +1,4 @@
 # "What's new" on Google Play. See en-US.txt for the rules; the lines here translate it line by line.
 Nacht und Astro: nächstes Foto ein Intervall nach dem fertigen; Modus gleich beim Start
 Pixel Camera: Nachtmodus öffnet keine Einstellungen mehr
+Eigene Kameramodi: Tipp- und Wischschritte in jeder Kamera-App aufnehmen
