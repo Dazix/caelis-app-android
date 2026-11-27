@@ -116,7 +116,7 @@ fun StudioScreen(
 
 /**
  * Where the photos come from. Photo access is the way: Studio finds a session's photos itself. One
- * granted folder is the quiet fallback without it, offered only as a text button.
+ * granted folder is the quiet fallback without it, a text button behind [FOLDER_FALLBACK_SHOWN].
  */
 @Composable
 private fun PhotosCard(
@@ -156,6 +156,7 @@ private fun PhotosCard(
                 Text(stringResource(R.string.studio_photos_allow))
             }
         }
+        if (!FOLDER_FALLBACK_SHOWN) return@SectionCard
         TextButton(onClick = onPickFolder, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(
                 stringResource(
@@ -165,6 +166,12 @@ private fun PhotosCard(
         }
     }
 }
+
+/**
+ * The folder fallback is hidden for now: photo access is the one way in while Studio is in beta. A
+ * folder granted earlier still works (and joining videos needs it), it just cannot be picked anew.
+ */
+private const val FOLDER_FALLBACK_SHOWN = false
 
 /** One set of options for every output; read when a job starts, so a change mid-run waits for the next. */
 @Composable
