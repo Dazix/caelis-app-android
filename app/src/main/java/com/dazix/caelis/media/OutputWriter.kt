@@ -38,6 +38,22 @@ object OutputWriter {
         }
     }
 
+    /** The name the gallery shows, or null when the row is gone (deleted in the gallery meanwhile). */
+    fun displayName(context: Context, uri: Uri): String? = runCatching {
+        context.contentResolver.query(uri, arrayOf(MediaStore.MediaColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+            if (c.moveToFirst()) c.getString(0) else null
+        }
+    }.getOrNull()
+
+    /**
+     * Renames an output this app saved (its own row: no permission needed) and returns the name
+     * MediaStore actually kept, which may differ when the name was taken; null when it refused.
+     */
+    fun rename(context: Context, uri: Uri, displayName: String): String? = runCatching {
+        val values = ContentValues().apply { put(MediaStore.MediaColumns.DISPLAY_NAME, displayName) }
+        if (context.contentResolver.update(uri, values, null, null) == 1) displayName(context, uri) else null
+    }.getOrNull()
+
     internal fun insert(
         context: Context,
         source: File,

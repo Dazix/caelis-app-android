@@ -71,6 +71,42 @@
     <string name="studio_action_video">Video</string>
     <string name="studio_action_growing">Rostoucí stopy</string>
     <string name="studio_action_join">Spojit videa</string>
+    <string name="studio_action_video_summary">Časosběrné video ze všech fotek</string>
+    <string name="studio_action_trails_summary">Jeden snímek s drahami hvězd po obloze</string>
+    <string name="studio_action_growing_summary">Video, ve kterém stopy postupně rostou</string>
+    <string name="studio_action_average_summary">Jeden snímek zprůměrovaný ze všech fotek, s menším šumem</string>
+    <string name="studio_action_join_summary">Jedno video z klipů série</string>
+    <string name="studio_action_start">Vytvořit: %1$s</string>
+    <string name="studio_session_preview">Fotka %1$d</string>
+    <string name="studio_photo_info">Informace o fotce</string>
+    <string name="studio_info_name">Název</string>
+    <string name="studio_info_taken">Pořízeno</string>
+    <string name="studio_info_size">Velikost</string>
+    <string name="studio_info_camera">Fotoaparát</string>
+    <string name="studio_info_exposure">Expozice</string>
+    <string name="studio_info_location">Poloha</string>
+    <string name="studio_info_location_none">Není k dispozici</string>
+    <plurals name="studio_photo_position">
+        <item quantity="one">Fotka %1$d z %2$d</item>
+        <item quantity="few">Fotka %1$d z %2$d</item>
+        <item quantity="many">Fotka %1$d z %2$d</item>
+        <item quantity="other">Fotka %1$d z %2$d</item>
+    </plurals>
+    <plurals name="studio_photos_grid_title">
+        <item quantity="one">%1$d fotka</item>
+        <item quantity="few">%1$d fotky</item>
+        <item quantity="many">%1$d fotky</item>
+        <item quantity="other">%1$d fotek</item>
+    </plurals>
+    <plurals name="studio_photos_show_all">
+        <item quantity="one">Zobrazit %1$d fotku</item>
+        <item quantity="few">Zobrazit všechny %1$d fotky</item>
+        <item quantity="many">Zobrazit všech %1$d fotky</item>
+        <item quantity="other">Zobrazit všech %1$d fotek</item>
+    </plurals>
+    <string name="studio_session_pick">Vyberte sérii</string>
+    <string name="studio_session_change">změnit sérii</string>
+    <string name="studio_session_selected">Vybráno</string>
     <string name="studio_job_preparing">Načítám fotky…</string>
     <string name="studio_job_done_video">Uloženo do Filmy/Caelis</string>
     <plurals name="studio_session_videos">
@@ -83,6 +119,10 @@
     <string name="studio_job_cancel">Zrušit</string>
     <string name="studio_job_done">Uloženo do Obrázky/Caelis</string>
     <string name="studio_job_open">Otevřít</string>
+    <string name="studio_job_rename">Přejmenovat</string>
+    <string name="studio_rename_title">Přejmenovat soubor</string>
+    <string name="studio_rename_name">Název</string>
+    <string name="studio_rename_failed">Soubor se nepodařilo přejmenovat.</string>
     <string name="studio_job_failed">Složení se nepodařilo. Zkontrolujte, že fotky jsou ve složce.</string>
     <plurals name="studio_job_skipped">
         <item quantity="one">%1$d fotka jiné velikosti vynechána</item>

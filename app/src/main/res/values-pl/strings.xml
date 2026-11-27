@@ -71,6 +71,42 @@
     <string name="studio_action_video">Film</string>
     <string name="studio_action_growing">Rosnące ślady</string>
     <string name="studio_action_join">Połącz filmy</string>
+    <string name="studio_action_video_summary">Film poklatkowy ze wszystkich zdjęć</string>
+    <string name="studio_action_trails_summary">Jedno zdjęcie ze śladami gwiazd na niebie</string>
+    <string name="studio_action_growing_summary">Film, w którym ślady rosną zdjęcie po zdjęciu</string>
+    <string name="studio_action_average_summary">Jedno zdjęcie uśrednione ze wszystkich, z mniejszym szumem</string>
+    <string name="studio_action_join_summary">Jeden film z klipów serii</string>
+    <string name="studio_action_start">Utwórz: %1$s</string>
+    <string name="studio_session_preview">Zdjęcie %1$d</string>
+    <string name="studio_photo_info">Informacje o zdjęciu</string>
+    <string name="studio_info_name">Nazwa</string>
+    <string name="studio_info_taken">Zrobione</string>
+    <string name="studio_info_size">Rozmiar</string>
+    <string name="studio_info_camera">Aparat</string>
+    <string name="studio_info_exposure">Ekspozycja</string>
+    <string name="studio_info_location">Lokalizacja</string>
+    <string name="studio_info_location_none">Niedostępna</string>
+    <plurals name="studio_photo_position">
+        <item quantity="one">Zdjęcie %1$d z %2$d</item>
+        <item quantity="few">Zdjęcie %1$d z %2$d</item>
+        <item quantity="many">Zdjęcie %1$d z %2$d</item>
+        <item quantity="other">Zdjęcie %1$d z %2$d</item>
+    </plurals>
+    <plurals name="studio_photos_grid_title">
+        <item quantity="one">%1$d zdjęcie</item>
+        <item quantity="few">%1$d zdjęcia</item>
+        <item quantity="many">%1$d zdjęć</item>
+        <item quantity="other">%1$d zdjęcia</item>
+    </plurals>
+    <plurals name="studio_photos_show_all">
+        <item quantity="one">Pokaż %1$d zdjęcie</item>
+        <item quantity="few">Pokaż wszystkie %1$d zdjęcia</item>
+        <item quantity="many">Pokaż wszystkie %1$d zdjęć</item>
+        <item quantity="other">Pokaż wszystkie %1$d zdjęcia</item>
+    </plurals>
+    <string name="studio_session_pick">Wybierz serię</string>
+    <string name="studio_session_change">zmień serię</string>
+    <string name="studio_session_selected">Wybrano</string>
     <string name="studio_job_preparing">Wczytuję zdjęcia…</string>
     <string name="studio_job_done_video">Zapisano w Filmy/Caelis</string>
     <plurals name="studio_session_videos">
@@ -83,6 +119,10 @@
     <string name="studio_job_cancel">Anuluj</string>
     <string name="studio_job_done">Zapisano w Obrazy/Caelis</string>
     <string name="studio_job_open">Otwórz</string>
+    <string name="studio_job_rename">Zmień nazwę</string>
+    <string name="studio_rename_title">Zmień nazwę pliku</string>
+    <string name="studio_rename_name">Nazwa</string>
+    <string name="studio_rename_failed">Nie udało się zmienić nazwy pliku.</string>
     <string name="studio_job_failed">Składanie nie powiodło się. Sprawdź, czy zdjęcia są w folderze.</string>
     <plurals name="studio_job_skipped">
         <item quantity="one">Pominięto %1$d zdjęcie innego rozmiaru</item>
