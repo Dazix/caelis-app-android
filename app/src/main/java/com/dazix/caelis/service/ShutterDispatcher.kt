@@ -7,11 +7,21 @@ import android.graphics.PointF
 import android.graphics.Rect
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.view.Surface
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import com.dazix.caelis.domain.TapTarget
+import com.dazix.caelis.domain.cameramode.CustomCameraMode
+import com.dazix.caelis.domain.cameramode.ModeProofPolicy
+import com.dazix.caelis.domain.cameramode.NodeAtPoint
+import com.dazix.caelis.domain.cameramode.NodeInfo
+import com.dazix.caelis.domain.cameramode.NodeSignature
+import com.dazix.caelis.domain.cameramode.RecordedGesture
+import com.dazix.caelis.domain.cameramode.RecordedStep
+import com.dazix.caelis.domain.cameramode.StepMatchPolicy
+import com.dazix.caelis.domain.cameramode.StepTarget
 import java.util.ArrayDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
@@ -57,6 +67,49 @@ data class TapOutcome(
         "${path.name}${if (fired) "" else "(failed:$failure)"} at ${x.toInt()},${y.toInt()}" +
             (matchedBy?.let { " via $it" } ?: "")
 }
+
+/** What [ShutterDispatcher.selectCameraMode] did. */
+enum class ModeSelection {
+    /** The mode's chip was already selected; nothing was tapped. */
+    ALREADY,
+
+    /** The chip was clicked and the UI was given time to settle. */
+    SWITCHED,
+
+    /** No chip for the mode on screen (yet): a camera still starting up shows its carousel late. */
+    NOT_FOUND,
+
+    /** The profile knows no such mode; nothing will ever be tapped for it. */
+    UNKNOWN_MODE,
+}
+
+/** What [ShutterDispatcher.replayCustomMode] did. A failed step carries its index (0-based). */
+sealed interface CustomReplayResult {
+    /** The mode's proof was already selected; nothing was tapped. */
+    data object Already : CustomReplayResult
+
+    /** Every step was replayed and the UI was given time to settle. */
+    data object Switched : CustomReplayResult
+
+    /** The step's element did not appear (or several fit it); the steps after it were not replayed. */
+    data class StepNotFound(val index: Int) : CustomReplayResult
+
+    /** The step needs its recorded position, and this is not the screen it was recorded on. */
+    data class ScreenMismatch(val index: Int) : CustomReplayResult
+
+    /** The platform refused or cancelled the step's gesture. */
+    data class GestureRejected(val index: Int) : CustomReplayResult
+
+    /** The caller stopped wanting it (the session ended) before the replay was done. */
+    data object Cancelled : CustomReplayResult
+}
+
+/** One look at the screen: the real nodes, and the same nodes for the pure policies. */
+class Screen(
+    val geometry: DisplayGeometry,
+    val nodes: List<AccessibilityNodeInfo>,
+    val infos: List<NodeInfo>,
+)
 
 /**
  * Presses the shutter. Hybrid on purpose: `ACTION_CLICK` on the real node is precise and survives
@@ -147,14 +200,22 @@ class ShutterDispatcher(private val service: AccessibilityService) {
         )
     }
 
-    /** True while the camera app still shows one of the profile's long-exposure busy indicators. */
-    fun isBusy(profile: CameraProfile): Boolean {
-        if (profile.longExposureBusyPatterns.isEmpty()) return false
-        return nodes().any { node ->
-            profile.longExposureBusyPatterns.matchesAny(node.contentDescription) ||
-                profile.longExposureBusyPatterns.matchesAny(node.text)
-        }
+    /**
+     * True while the camera app is visibly still working on a capture: one of the profile's busy
+     * indicators is on screen, or a shutter is shown but disabled. The second rule is what makes this
+     * work for any camera app: Pixel Camera's Astro disables its shutter (and relabels it "Zrušit
+     * fotku") for the whole exposure, and a camera that will not take a tap is busy whatever it says.
+     */
+    fun isCameraBusy(profile: CameraProfile): Boolean = nodes().any { node ->
+        profile.longExposureBusyPatterns.matchesAny(node.contentDescription) ||
+            profile.longExposureBusyPatterns.matchesAny(node.text) ||
+            (node.isVisibleToUser && !node.isEnabled && isShutterNode(profile, node))
     }
+
+    private fun isShutterNode(profile: CameraProfile, node: AccessibilityNodeInfo): Boolean =
+        profile.isShutterViewId(node.viewIdResourceName) ||
+            CameraProfiles.generic.isShutterViewId(node.viewIdResourceName) ||
+            profile.isShutterLabel(node.contentDescription)
 
     /** Clicks post-capture chips/previews standing between us and the next shot. Returns how many. */
     fun dismissPostCaptureUi(profile: CameraProfile): Int {
@@ -197,36 +258,33 @@ class ShutterDispatcher(private val service: AccessibilityService) {
      * [modeKey] is a stable key ([CameraProfile.MODE_PHOTO] and friends), never a display string:
      * chip labels are localized, so comparing them against an English literal silently did nothing
      * on a Czech phone. The profile's [CameraProfile.modeAliases] carry the per-language patterns,
-     * and [CameraProfile.eligibleModeChipPatterns] still constrains which nodes may be tapped, so an
-     * unrelated label cannot be hit. An unknown key does nothing rather than guessing.
+     * and [CameraProfile.isModeChipFor] decides which node is that mode's chip, so an unrelated
+     * control with the same words (Pixel's minibar Night Sight icon, which opens the settings sheet)
+     * cannot be hit. An unknown key does nothing rather than guessing.
      */
-    fun selectCameraMode(profile: CameraProfile, modeKey: String, onDone: (Boolean) -> Unit) {
-        val wanted = profile.modePatterns(modeKey)
-        if (wanted.isEmpty()) {
+    fun selectCameraMode(profile: CameraProfile, modeKey: String, onDone: (ModeSelection) -> Unit) {
+        if (!profile.supportsMode(modeKey)) {
             Log.i(TAG, "profile ${profile.id} knows no mode '$modeKey', leaving the app alone")
-            onDone(false)
+            onDone(ModeSelection.UNKNOWN_MODE)
             return
         }
-        val alreadyThere = nodes().any { node ->
-            node.isSelected && (wanted.matchesAny(node.contentDescription) || wanted.matchesAny(node.text))
-        }
+        fun AccessibilityNodeInfo.isChip(): Boolean =
+            profile.isModeChipFor(modeKey, viewIdResourceName, contentDescription) ||
+                profile.isModeChipFor(modeKey, viewIdResourceName, text)
+
+        val alreadyThere = nodes().any { node -> node.isSelected && node.isChip() }
         if (alreadyThere) {
-            onDone(false)
+            onDone(ModeSelection.ALREADY)
             return
         }
-        val eligible = profile.eligibleModeChipPatterns
-        val chip = nodes().firstOrNull { node ->
-            val label = node.contentDescription ?: node.text ?: return@firstOrNull false
-            node.isVisibleToUser &&
-                wanted.matchesAny(label) &&
-                (eligible.isEmpty() || eligible.matchesAny(label))
-        }
+        val chip = nodes().firstOrNull { node -> node.isVisibleToUser && node.isChip() }
+        if (chip == null) Log.i(TAG, "no '$modeKey' chip on screen for profile ${profile.id}")
         val switched = clickableSelfOrAncestor(chip)?.performActionSafely() == true
         if (!switched) {
-            onDone(false)
+            onDone(ModeSelection.NOT_FOUND)
             return
         }
-        handler.postDelayed({ onDone(true) }, UI_SETTLE_MS)
+        handler.postDelayed({ onDone(ModeSelection.SWITCHED) }, UI_SETTLE_MS)
     }
 
     /** True when the app currently shows a still-photo mode indicator (empty patterns: unknown). */
@@ -234,6 +292,189 @@ class ShutterDispatcher(private val service: AccessibilityService) {
         if (profile.photoModeIndicatorPatterns.isEmpty()) return true
         return firstMatching(profile.photoModeIndicatorPatterns) != null
     }
+
+    // ---- recorded modes ------------------------------------------------------------------------
+
+    /**
+     * The screen of [packageName]'s window as the pure policies see it, with the real nodes beside
+     * it. The app's own window rather than the active one: during a recording our overlay sits on top.
+     */
+    fun screen(packageName: String?): Screen {
+        val geometry = DisplayGeometry.current(service)
+        val nodes = nodes(rootFor(packageName))
+        val bounds = Rect()
+        val infos = nodes.mapIndexed { index, node ->
+            runCatching { node.getBoundsInScreen(bounds) }.onFailure { bounds.setEmpty() }
+            val natural = geometry.naturalBounds(bounds)
+            NodeInfo(
+                index = index,
+                viewId = node.viewIdResourceName?.takeIf { it.isNotBlank() },
+                label = labelOf(node),
+                className = node.className?.toString(),
+                left = natural.left,
+                top = natural.top,
+                right = natural.right,
+                bottom = natural.bottom,
+                clickable = node.isClickable,
+                visible = node.isVisibleToUser && !bounds.isEmpty,
+                selected = node.isSelected,
+            )
+        }
+        return Screen(geometry, nodes, infos)
+    }
+
+    /** What a finger at the current-screen pixel ([x], [y]) is on, or null when nothing identifiable. */
+    fun elementAt(packageName: String, x: Float, y: Float): NodeSignature? {
+        val screen = screen(packageName)
+        val point = screen.geometry.naturalPoint(x, y)
+        return NodeAtPoint.pick(screen.infos, point.x, point.y)?.toSignature()
+    }
+
+    /** True when [signature] is the camera's shutter: recording it would take a photo at every start. */
+    fun isShutterElement(profile: CameraProfile, signature: NodeSignature): Boolean =
+        profile.isShutterViewId(signature.viewId) ||
+            CameraProfiles.generic.isShutterViewId(signature.viewId) ||
+            profile.isShutterLabel(signature.label)
+
+    /**
+     * Passes a gesture the user just made on the recording overlay through to the app below, exactly
+     * where it was made. The overlay must be untouchable while this runs, or it receives it itself.
+     */
+    fun passThrough(gesture: RecordedGesture, onDone: (Boolean) -> Unit) {
+        when (gesture) {
+            is RecordedGesture.Tap -> tap(PointF(gesture.x, gesture.y), TapPath.GESTURE_ON_TARGET, null) {
+                onDone(it.fired)
+            }
+            is RecordedGesture.Swipe ->
+                swipe(gesture.points.map { PointF(it.x, it.y) }, gesture.durationMs, onDone)
+        }
+    }
+
+    /**
+     * Replays [mode] into the app in front, step by step, and reports once through [onDone].
+     *
+     * Nothing is tapped when the mode's proof is already selected. A step whose element is not on
+     * screen is looked for again until its deadline (the first step until [firstStepDeadline], an
+     * uptime, because a camera that was just launched draws its controls late; later steps for
+     * [NEXT_STEP_WAIT_MS]) and then stops the replay: tapping the steps after a missing one would
+     * act on a screen the recording never saw. [isActive] is asked before every step, so a session
+     * stopped mid-replay taps nothing more.
+     */
+    fun replayCustomMode(
+        mode: CustomCameraMode,
+        firstStepDeadline: Long,
+        isActive: () -> Boolean,
+        onDone: (CustomReplayResult) -> Unit,
+    ) {
+        val start = screen(mode.packageName)
+        if (ModeProofPolicy.isOn(mode.proof, start.infos)) {
+            onDone(CustomReplayResult.Already)
+            return
+        }
+        replayStep(mode, 0, firstStepDeadline, isActive, onDone)
+    }
+
+    private fun replayStep(
+        mode: CustomCameraMode,
+        index: Int,
+        firstStepDeadline: Long,
+        isActive: () -> Boolean,
+        onDone: (CustomReplayResult) -> Unit,
+    ) {
+        if (index >= mode.steps.size) {
+            handler.postDelayed({ onDone(CustomReplayResult.Switched) }, UI_SETTLE_MS)
+            return
+        }
+        val step = mode.steps[index]
+        val wait = maxOf(step.delayBeforeMs, UI_SETTLE_MS)
+        handler.postDelayed({
+            val deadline = if (index == 0) {
+                maxOf(firstStepDeadline, SystemClock.uptimeMillis())
+            } else {
+                SystemClock.uptimeMillis() + NEXT_STEP_WAIT_MS
+            }
+            attemptStep(mode, index, deadline, firstStepDeadline, isActive, onDone)
+        }, wait)
+    }
+
+    private fun attemptStep(
+        mode: CustomCameraMode,
+        index: Int,
+        deadline: Long,
+        firstStepDeadline: Long,
+        isActive: () -> Boolean,
+        onDone: (CustomReplayResult) -> Unit,
+    ) {
+        if (!isActive()) {
+            onDone(CustomReplayResult.Cancelled)
+            return
+        }
+        val screen = screen(mode.packageName)
+        val sameScreen = StepMatchPolicy.sameScreen(mode, screen.geometry.naturalWidthPx, screen.geometry.naturalHeightPx)
+        val next: (Boolean) -> Unit = { fired ->
+            if (fired) {
+                replayStep(mode, index + 1, firstStepDeadline, isActive, onDone)
+            } else {
+                onDone(CustomReplayResult.GestureRejected(index))
+            }
+        }
+        when (val step = mode.steps[index]) {
+            is RecordedStep.Swipe -> {
+                if (!StepMatchPolicy.canSwipe(sameScreen)) {
+                    onDone(CustomReplayResult.ScreenMismatch(index))
+                    return
+                }
+                val path = step.points.map { screen.geometry.screenPoint(it.x, it.y) }
+                swipe(path, step.durationMs, next)
+            }
+            is RecordedStep.Tap -> when (val target = StepMatchPolicy.locate(step, screen.infos, sameScreen)) {
+                is StepTarget.Element -> {
+                    val node = screen.nodes[target.node.index]
+                    if (clickableSelfOrAncestor(node)?.performActionSafely() == true) {
+                        next(true)
+                    } else {
+                        val centre = centreOf(node, screen.geometry)
+                        if (centre == null) {
+                            onDone(CustomReplayResult.StepNotFound(index))
+                        } else {
+                            tap(centre, TapPath.GESTURE_ON_NODE, null) { next(it.fired) }
+                        }
+                    }
+                }
+                StepTarget.Position ->
+                    tap(screen.geometry.screenPoint(step.x, step.y), TapPath.GESTURE_ON_TARGET, null) {
+                        next(it.fired)
+                    }
+                StepTarget.ScreenMismatch -> onDone(CustomReplayResult.ScreenMismatch(index))
+                StepTarget.NotFound, StepTarget.Ambiguous -> {
+                    if (SystemClock.uptimeMillis() < deadline) {
+                        handler.postDelayed(
+                            { attemptStep(mode, index, deadline, firstStepDeadline, isActive, onDone) },
+                            STEP_POLL_MS,
+                        )
+                    } else {
+                        Log.i(TAG, "recorded step ${index + 1} of '${mode.name}' not found: $target")
+                        onDone(CustomReplayResult.StepNotFound(index))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun rootFor(packageName: String?): AccessibilityNodeInfo? {
+        if (packageName != null) {
+            val own = runCatching {
+                service.windows
+                    ?.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_APPLICATION && it.root?.packageName == packageName }
+                    ?.root
+            }.getOrNull()
+            if (own != null) return own
+        }
+        return runCatching { service.rootInActiveWindow }.getOrNull()
+    }
+
+    private fun labelOf(node: AccessibilityNodeInfo): String? =
+        (node.contentDescription ?: node.text)?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.take(MAX_LABEL_CHARS)
 
     // ---- node search ---------------------------------------------------------------------------
 
@@ -319,8 +560,10 @@ class ShutterDispatcher(private val service: AccessibilityService) {
         return Match(node, MATCHED_REGION, node, nodeBounds)
     }
 
-    private fun nodes(): List<AccessibilityNodeInfo> {
-        val root = runCatching { service.rootInActiveWindow }.getOrNull() ?: return emptyList()
+    private fun nodes(
+        root: AccessibilityNodeInfo? = runCatching { service.rootInActiveWindow }.getOrNull(),
+    ): List<AccessibilityNodeInfo> {
+        root ?: return emptyList()
         val out = ArrayList<AccessibilityNodeInfo>(64)
         val queue = ArrayDeque<AccessibilityNodeInfo>()
         val depths = ArrayDeque<Int>()
@@ -377,22 +620,36 @@ class ShutterDispatcher(private val service: AccessibilityService) {
      * stroke is exactly how the platform models a tap.
      */
     private fun tap(point: PointF, path: TapPath, matchedBy: String?, onResult: (TapOutcome) -> Unit) {
+        stroke(Path().apply { moveTo(point.x, point.y) }, TAP_DURATION_MS) { fired, failure ->
+            onResult(TapOutcome(path, fired, point.x, point.y, matchedBy, failure))
+        }
+    }
+
+    /** One finger along [points] (current-screen pixels) over [durationMs]. */
+    private fun swipe(points: List<PointF>, durationMs: Long, onDone: (Boolean) -> Unit) {
+        if (points.size < 2) {
+            onDone(false)
+            return
+        }
+        val geometry = DisplayGeometry.current(service)
+        val path = Path()
+        points.map { geometry.clampToScreen(it) }.forEachIndexed { i, p ->
+            if (i == 0) path.moveTo(p.x, p.y) else path.lineTo(p.x, p.y)
+        }
+        stroke(path, durationMs.coerceIn(1L, GestureDescription.getMaxGestureDuration())) { fired, _ -> onDone(fired) }
+    }
+
+    private fun stroke(path: Path, durationMs: Long, onResult: (Boolean, String?) -> Unit) {
         val reported = AtomicBoolean(false)
         fun report(fired: Boolean, failure: String? = null) {
-            if (reported.compareAndSet(false, true)) {
-                onResult(TapOutcome(path, fired, point.x, point.y, matchedBy, failure))
-            }
+            if (reported.compareAndSet(false, true)) onResult(fired, failure)
         }
 
         val gesture = runCatching {
-            val stroke = GestureDescription.StrokeDescription(
-                Path().apply { moveTo(point.x, point.y) },
-                0L,
-                TAP_DURATION_MS,
-            )
+            val stroke = GestureDescription.StrokeDescription(path, 0L, durationMs)
             GestureDescription.Builder().addStroke(stroke).build()
         }.getOrElse {
-            Log.w(TAG, "could not build tap gesture at ${point.x},${point.y}", it)
+            Log.w(TAG, "could not build a gesture", it)
             report(false, FAILURE_GESTURE_INVALID)
             return
         }
@@ -432,6 +689,12 @@ class ShutterDispatcher(private val service: AccessibilityService) {
 
         const val MATCHED_REGION = "region"
         const val MATCHED_CALIBRATED = "calibrated"
+
+        /** How long a recorded step after the first may take to appear after the one before. */
+        const val NEXT_STEP_WAIT_MS = 3_000L
+
+        private const val STEP_POLL_MS = 400L
+        private const val MAX_LABEL_CHARS = 200
 
         private const val MAX_NODES = 2_500
         private const val MAX_DEPTH = 40

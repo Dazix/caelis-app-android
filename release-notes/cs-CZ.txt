@@ -1,11 +1,4 @@
 # "What's new" on Google Play. See en-US.txt for the rules; the lines here translate it line by line.
-Virtuální místa: Slunce a noční obloha z uloženého místa
-Názvy vrcholů stojí na špičce, ve dne na tmavém podkladu
-Nově slovensky, polsky a německy
-Varování při časosběru z ruky
-Funguje i na Androidu 11 a 12
-Noční obloha: názvy se nepřekrývají, snáz se vybírají, asterismy v detailu hvězdy
-Horní lišta mimo výřez kamery
-Varování kompasu, jen když opravdu ujíždí
-Slunce: rychlejší kamera, pevný horizont
-Stahování terénu: celková velikost, limit či na vyžádání; výška nad terénem
+Noční a astro: další snímek až interval po dokončení; režim hned po startu
+Pixel Camera: noční režim už neotevírá nastavení
+Vlastní režimy fotoaparátu: nahrajte klepnutí a tažení v jakékoli aplikaci

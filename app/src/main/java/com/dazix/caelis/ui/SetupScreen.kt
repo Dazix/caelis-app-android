@@ -1,6 +1,7 @@
 package com.dazix.caelis.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.LocalContentColor
@@ -63,6 +64,7 @@ fun SetupScreen(
                 checked = target?.jitter == true,
                 enabled = target?.isRect == true,
                 disabledReason = stringResource(R.string.setup_tap_jitter_needs_area),
+                disabledReasonAsInfo = true,
                 onCheckedChange = onJitterChange,
             )
         }
@@ -89,6 +91,9 @@ fun SetupScreen(
                     LocalContentColor.current.copy(alpha = 0.75f)
                 },
             )
+            // Night Sight and Astro keep the camera busy for seconds to minutes per photo, so a
+            // cadence that suits daylight cannot be delivered there.
+            InfoNote(text = stringResource(R.string.setup_interval_night_hint))
         }
 
         SectionCard(title = stringResource(R.string.setup_shots)) {
@@ -178,15 +183,21 @@ fun SetupScreen(
             )
         }
 
+        val photoAccess = PhotoAccessPrompt.access(mediaPermissionGranted, mediaPermissionPartial)
         SectionCard(title = stringResource(R.string.setup_verify_captures)) {
             SwitchRow(
-                title = stringResource(R.string.setup_verify_captures),
+                // The card's title already says it; repeating it on the switch read as a second heading.
+                title = null,
                 description = stringResource(R.string.setup_verify_captures_desc),
                 checked = state.verifyCaptures,
                 onCheckedChange = { checked ->
                     onChange(state.copy(verifyCaptures = checked))
-                    // Switching it on is the only moment photo access is asked for.
-                    if (checked && !mediaPermissionGranted) onRequestMediaPermission()
+                    // Switching it on is the only moment photo access is asked for. Not after
+                    // "Select photos": asking again then opens only the picker for more photos, and
+                    // the status below points to the app's settings instead.
+                    if (checked && photoAccess == PhotoAccessPrompt.Access.MISSING) {
+                        onRequestMediaPermission()
+                    }
                 },
             )
             if (state.verifyCaptures) {
@@ -196,31 +207,40 @@ fun SetupScreen(
                         granted = true,
                     )
                 } else {
-                    // The toggle deliberately stays on: "Select photos" leaves the images
-                    // permission denied, and turning verification off behind the user's back would
-                    // undo the choice they just made instead of telling them what is missing.
-                    Text(
-                        text = stringResource(
-                            if (mediaPermissionPartial) {
-                                R.string.setup_verify_permission_partial
-                            } else {
-                                R.string.setup_verify_permission_needed
-                            }
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    // Wraps instead of clipping when the labels grow with the font scale.
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        TextButton(onClick = onRequestMediaPermission) {
-                            Text(stringResource(R.string.action_grant))
+                    // On with "Select photos" (a refusal or Back turns it off, in MainActivity): the
+                    // user granted something, and turning it off behind their back would undo that
+                    // choice instead of telling them what is missing.
+                    // No gap between the text and its buttons (the card spaces by 10 dp), so they read
+                    // as part of the switch's status and not as a row of their own (as in Advanced).
+                    Column {
+                        if (photoAccess == PhotoAccessPrompt.Access.PARTIAL) {
+                            IconText(
+                                text = stringResource(R.string.setup_verify_permission_partial),
+                                icon = AppIcons.Warning,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.setup_verify_permission_needed),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                         }
-                        TextButton(onClick = onOpenAppSettings) {
-                            Text(stringResource(R.string.setup_verify_open_settings))
+                        // Wraps instead of clipping when the labels grow with the font scale.
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            if (!PhotoAccessPrompt.allowOpensSettings(photoAccess)) {
+                                TextButton(onClick = onRequestMediaPermission) {
+                                    Text(stringResource(R.string.action_grant))
+                                }
+                            }
+                            TextButton(onClick = onOpenAppSettings) {
+                                Text(stringResource(R.string.setup_verify_open_settings))
+                            }
                         }
                     }
                 }

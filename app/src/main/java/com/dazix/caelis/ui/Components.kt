@@ -256,12 +256,15 @@ enum class CardTone { NEUTRAL, WARNING, ACCENT }
 /** A switch with its explanation, plus a visible reason when it cannot be switched at all. */
 @Composable
 fun SwitchRow(
-    title: String,
+    /** Null when the card's own title already names the switch; the description then labels it. */
+    title: String?,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     description: String? = null,
     enabled: Boolean = true,
     disabledReason: String? = null,
+    /** Shows the disabled reason as an [InfoNote], for a reason that is a hint rather than a fault. */
+    disabledReasonAsInfo: Boolean = false,
 ) {
     val alpha = if (enabled) 1f else 0.5f
     Row(
@@ -280,11 +283,13 @@ fun SwitchRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = LocalContentColor.current.copy(alpha = alpha),
-            )
+            if (title != null) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = LocalContentColor.current.copy(alpha = alpha),
+                )
+            }
             if (description != null) {
                 Text(
                     text = description,
@@ -298,16 +303,48 @@ fun SwitchRow(
                 )
             }
             if (!enabled && disabledReason != null) {
-                Text(
-                    text = disabledReason,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                )
+                if (disabledReasonAsInfo) {
+                    // 10dp: the same gap a SectionCard puts between its rows, so the note sits like
+                    // the card's other notes instead of hanging off the description.
+                    InfoNote(
+                        text = disabledReason,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 10.dp),
+                    )
+                } else {
+                    Text(
+                        text = disabledReason,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
         }
         Spacer(Modifier.width(12.dp))
         // null: the row above owns the click, so the switch is the state's picture, not a target.
         Switch(checked = checked, onCheckedChange = null, enabled = enabled)
+    }
+}
+
+/**
+ * A small hint line with an info icon in front. The icon is decorative (the text says it all), so
+ * it carries no content description and a screen reader reads the text alone.
+ */
+@Composable
+fun InfoNote(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = LocalContentColor.current.copy(alpha = 0.75f),
+) {
+    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Icon(
+            imageVector = AppIcons.Info,
+            contentDescription = null,
+            tint = color,
+            // Sits on the first line of the text, not centred on a wrapped paragraph.
+            modifier = Modifier.padding(top = 1.dp).size(16.dp),
+        )
+        Text(text = text, style = MaterialTheme.typography.bodySmall, color = color)
     }
 }
 
@@ -710,6 +747,24 @@ fun ProgressRing(
         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         indicatorColor = MaterialTheme.colorScheme.primary,
     )
+}
+
+/**
+ * Small print with an icon in front (a warning sign, an info mark), both in [color]. The words carry
+ * the meaning, so the icon has no content description of its own.
+ */
+@Composable
+fun IconText(text: String, icon: ImageVector, color: Color, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.Top) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(text = text, style = MaterialTheme.typography.bodySmall, color = color)
+    }
 }
 
 /** Icon plus words. The words are the state; the icon and the colour only reinforce them. */

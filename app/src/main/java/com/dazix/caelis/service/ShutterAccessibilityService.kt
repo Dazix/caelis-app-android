@@ -2,6 +2,9 @@ package com.dazix.caelis.service
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import com.dazix.caelis.R
@@ -11,6 +14,7 @@ import com.dazix.caelis.domain.SessionConfig
 import com.dazix.caelis.domain.SessionSnapshot
 import com.dazix.caelis.domain.SessionState
 import com.dazix.caelis.domain.StopReason
+import com.dazix.caelis.domain.cameramode.CustomCameraMode
 import com.dazix.caelis.notify.SessionNotifications
 import com.dazix.caelis.overlay.OverlayController
 import kotlinx.coroutines.CoroutineScope
@@ -219,8 +223,61 @@ class ShutterAccessibilityService : AccessibilityService() {
     }
     // ==== END INTEGRATION POINT =================================================================
 
+    // ---- recorded camera modes, outside a session ----------------------------------------------
+
+    /** Recording and testing a mode tap through the same class as a session; it holds no state. */
+    private val modeDispatcher by lazy { ShutterDispatcher(this) }
+
+    private val modeHandler = Handler(Looper.getMainLooper())
+
+    private val sessionBusy: Boolean
+        get() = when (SessionRepository.snapshot.value.state) {
+            is SessionState.Idle, is SessionState.Stopped -> false
+            else -> true
+        }
+
+    /**
+     * Opens [mode]'s app, waits for it to be in front and replays the mode, as a session start would.
+     * Refused (false) while a session runs: two things tapping one camera would fight.
+     */
+    private fun testCustomMode(mode: CustomCameraMode, onDone: (CustomReplayResult?) -> Unit): Boolean {
+        if (sessionBusy) return false
+        val intent = runCatching { packageManager.getLaunchIntentForPackage(mode.packageName) }.getOrNull()
+            ?: return false
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+        if (runCatching { startActivity(intent) }.isFailure) return false
+        val giveUpAt = SystemClock.uptimeMillis() + TEST_LAUNCH_WAIT_MS
+        fun waitForApp() {
+            when {
+                modeDispatcher.foregroundPackage() == mode.packageName -> modeDispatcher.replayCustomMode(
+                    mode,
+                    firstStepDeadline = SystemClock.uptimeMillis() + SessionEngine.MODE_FIND_TIMEOUT_MS,
+                    isActive = { !sessionBusy && modeDispatcher.foregroundPackage() == mode.packageName },
+                    onDone = onDone,
+                )
+                SystemClock.uptimeMillis() > giveUpAt -> onDone(null)
+                else -> modeHandler.postDelayed({ waitForApp() }, TEST_POLL_MS)
+            }
+        }
+        modeHandler.postDelayed({ waitForApp() }, TEST_POLL_MS)
+        return true
+    }
+
     companion object {
         private const val TAG = "ShutterService"
+
+        private const val TEST_LAUNCH_WAIT_MS = 10_000L
+        private const val TEST_POLL_MS = 300L
+
+        /** The tools a mode recording needs, or null while the service is off or a session runs. */
+        fun modeTools(): ShutterDispatcher? = instanceRef?.takeIf { !it.sessionBusy }?.modeDispatcher
+
+        /**
+         * Replays [mode] now. [onDone] gets the result on the main thread, or null when the app did not
+         * come to the front. Returns false when nothing was started (service off, session running).
+         */
+        fun testCustomMode(mode: CustomCameraMode, onDone: (CustomReplayResult?) -> Unit): Boolean =
+            instanceRef?.testCustomMode(mode, onDone) ?: false
 
         @Volatile
         private var instanceRef: ShutterAccessibilityService? = null

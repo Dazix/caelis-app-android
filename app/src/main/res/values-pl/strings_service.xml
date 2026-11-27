@@ -11,6 +11,8 @@
          same thing as session_warning_capture_unverified, which says a photo is actually missing. -->
     <string name="session_warning_verification_unavailable">Nie udało się odczytać biblioteki zdjęć, więc to zdjęcie nie zostało zweryfikowane.</string>
     <string name="session_warning_long_exposure_timeout">Aparat nadal jest zajęty; fotografuję mimo to.</string>
+    <string name="session_warning_custom_mode_missing">Nagrany tryb aparatu już nie istnieje; zdjęcia w bieżącym trybie.</string>
+    <string name="session_warning_custom_mode_failed">Tryb „%1$s”: nie znaleziono kroku %2$d. Nagraj tryb ponownie.</string>
     <string name="session_warning_inexact_alarms">Dokładne alarmy nie są dozwolone, więc długie interwały mogą się uruchamiać z opóźnieniem.</string>
     <string name="session_stopped_service_lost">Usługa dostępności została wyłączona, więc sesję zatrzymano.</string>
 </resources>

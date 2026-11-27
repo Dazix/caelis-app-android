@@ -243,7 +243,15 @@ adb shell am broadcast --user "$ANDROID_USER_ID" \
 # stop / clear the fake camera tap log
 adb shell am broadcast --user "$ANDROID_USER_ID" -a com.dazix.caelis.debug.STOP_SESSION   -n ... -f 0x00000020
 adb shell am broadcast --user "$ANDROID_USER_ID" -a com.dazix.caelis.debug.CLEAR_TAP_LOG -n ... -f 0x00000020
+
+# log the window in front as the accessibility service sees it (logcat tag CaelisNodes)
+adb shell am broadcast --user "$ANDROID_USER_ID" -a com.dazix.caelis.debug.DUMP_NODES    -n ... -f 0x00000020
 ```
+
+`DUMP_NODES` exists because `uiautomator dump` fails with "could not get idle state" on Pixel
+Camera's Night Sight and Astro screens, which are the ones a camera profile has to be written
+against: one line per node with view id, description, text, clickable/selected/enabled/visible and
+bounds.
 
 Extras: `target_package` (string), `interval_ms`, `start_delay_ms`, `max_shots`, `max_duration_ms`,
 `ramp_curve` (`linear`/`exponential`), `ramp_end_interval_ms`, `ramp_over_shots` (all accepted as
@@ -252,7 +260,8 @@ Extras: `target_package` (string), `interval_ms`, `start_delay_ms`, `max_shots`,
 
 The advanced, device-specific behaviour is reachable too - `--ez` or `--es`, all default false:
 `verify_captures`, `adaptive_long_exposure_wait`, `ensure_self_timer_off`, `dismiss_post_capture_ui`,
-plus `--es launch_camera_mode <name>`. Without them a scripted session would be testing a
+plus `--es launch_camera_mode <name>` (a profile key such as `night`, or `custom:<id>` for a recorded mode). `adaptive_long_exposure_wait` keeps its old name and now
+switches on **Interval after the photo is finished** (`intervalAfterCapture`). Without them a scripted session would be testing a
 configuration no user shoots in: a Pixel decides by itself to spend ~3 s on a Night Sight frame and
 ignores a shutter tap that arrives mid-capture.
 
@@ -264,8 +273,8 @@ ignores a shutter tap that arrives mid-capture.
   ~3 s per frame on the exposure alone, on top of the profile's 2.2 s capture latency. Measured at
   3 s: all five taps landed on the shutter node and only **three** files appeared. A cadence the
   camera cannot deliver would fail the test for a reason that has nothing to do with the app.
-* `adaptive_long_exposure_wait` on because that is the app's own answer to a busy camera: the interval
-  becomes a minimum and the engine holds the next shot while the busy indicators are up.
+* `adaptive_long_exposure_wait` on because that is the app's own answer to a busy camera: each next
+  shot comes one interval after the previous capture ended, and never while the camera is busy.
 * `verify_captures` off, deliberately. Verification looks at MediaStore one `captureLatencyMs`
   (2.2 s) after the tap, and the Pixel inserts its row later than that, so the engine decides the
   capture failed and re-taps **every** shot - measured: 10 shutter presses for 5 requested shots.

@@ -39,8 +39,38 @@ class DebugSessionReceiver : BroadcastReceiver() {
                 PreviewFrameClock.displayLagNs = lagMs * 1_000_000L
                 Log.i(TAG, "AR display lag set to $lagMs ms")
             }
+            ACTION_DUMP_NODES -> dumpNodes()
             else -> Log.w(TAG, "ignoring unknown action ${intent.action}")
         }
+    }
+
+    /**
+     * Logs the active window's nodes as the accessibility service sees them, one line each, under
+     * [NODES_TAG]. `uiautomator dump` fails with "could not get idle state" on Pixel Camera's Night
+     * Sight and Astro screens, which are exactly the ones a camera profile has to be written against.
+     */
+    private fun dumpNodes() {
+        val root = ShutterAccessibilityService.instance?.rootInActiveWindow
+        if (root == null) {
+            Log.w(NODES_TAG, "no active window")
+            return
+        }
+        val bounds = android.graphics.Rect()
+        val queue = ArrayDeque<android.view.accessibility.AccessibilityNodeInfo>().apply { add(root) }
+        var count = 0
+        while (queue.isNotEmpty() && count < 500) {
+            val node = queue.removeFirst()
+            count++
+            node.getBoundsInScreen(bounds)
+            Log.i(
+                NODES_TAG,
+                "id=${node.viewIdResourceName} desc=${node.contentDescription} text=${node.text} " +
+                    "click=${node.isClickable} sel=${node.isSelected} en=${node.isEnabled} " +
+                    "vis=${node.isVisibleToUser} b=${bounds.toShortString()}",
+            )
+            for (i in 0 until node.childCount) node.getChild(i)?.let(queue::add)
+        }
+        Log.i(NODES_TAG, "END $count nodes")
     }
 
     private fun startSession(intent: Intent) {
@@ -93,7 +123,7 @@ class DebugSessionReceiver : BroadcastReceiver() {
         // configuration no user shoots in.
         val advanced = AdvancedSettings(
             launchCameraMode = intent.getStringExtra(EXTRA_LAUNCH_CAMERA_MODE),
-            adaptiveLongExposureWait = intent.boolExtra(EXTRA_ADAPTIVE_LONG_EXPOSURE_WAIT),
+            intervalAfterCapture = intent.boolExtra(EXTRA_ADAPTIVE_LONG_EXPOSURE_WAIT),
             ensureSelfTimerOff = intent.boolExtra(EXTRA_ENSURE_SELF_TIMER_OFF),
             dismissPostCaptureUi = intent.boolExtra(EXTRA_DISMISS_POST_CAPTURE_UI),
         )
@@ -129,6 +159,10 @@ class DebugSessionReceiver : BroadcastReceiver() {
         const val ACTION_START = "com.dazix.caelis.debug.START_SESSION"
         const val ACTION_STOP = "com.dazix.caelis.debug.STOP_SESSION"
         const val ACTION_CLEAR_LOG = "com.dazix.caelis.debug.CLEAR_TAP_LOG"
+
+        /** Logs the active window's accessibility nodes under [NODES_TAG]. */
+        const val ACTION_DUMP_NODES = "com.dazix.caelis.debug.DUMP_NODES"
+        private const val NODES_TAG = "CaelisNodes"
 
         /** Tunes `PreviewFrameClock.displayLagNs` live; extra `lag_ms` (may be negative). */
         const val ACTION_SET_AR_DISPLAY_LAG = "com.dazix.caelis.debug.SET_AR_DISPLAY_LAG"

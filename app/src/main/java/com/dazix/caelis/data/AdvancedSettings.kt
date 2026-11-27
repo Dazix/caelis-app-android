@@ -6,7 +6,14 @@ package com.dazix.caelis.data
  */
 data class AdvancedSettings(
     val launchCameraMode: String? = null,
-    val adaptiveLongExposureWait: Boolean = false,
+    /**
+     * Count the interval from the end of each capture instead of from each tap: the next shot is
+     * taken one interval after the previous photo is finished (in MediaStore, or the camera idle
+     * again), and never while the camera is busy. For Night Sight / Astro, which run for minutes and
+     * cancel the photo when the shutter is pressed again. Stored under the key of the adaptive
+     * long-exposure wait it replaced, which only held the tap while known busy texts were on screen.
+     */
+    val intervalAfterCapture: Boolean = false,
     val ensureSelfTimerOff: Boolean = false,
     val dismissPostCaptureUi: Boolean = false,
     /**

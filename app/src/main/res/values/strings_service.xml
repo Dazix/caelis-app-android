@@ -11,6 +11,8 @@
          same thing as session_warning_capture_unverified, which says a photo is actually missing. -->
     <string name="session_warning_verification_unavailable">Your photo library could not be read, so this shot was not verified.</string>
     <string name="session_warning_long_exposure_timeout">The camera is still busy; shooting anyway.</string>
+    <string name="session_warning_custom_mode_missing">The recorded camera mode is gone; shooting in the mode the camera is in.</string>
+    <string name="session_warning_custom_mode_failed">Mode “%1$s”: step %2$d was not found. Record the mode again.</string>
     <string name="session_warning_inexact_alarms">Exact alarms are not allowed, so long intervals may fire late.</string>
     <string name="session_stopped_service_lost">The accessibility service was turned off, so the session stopped.</string>
 </resources>

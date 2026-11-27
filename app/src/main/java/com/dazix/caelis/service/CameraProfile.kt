@@ -37,6 +37,12 @@ data class CameraProfile(
     /** Mode chips ("Photo", "Night Sight", …) that can be tapped to switch modes. */
     val modeChipPatterns: List<Regex> = emptyList(),
     /**
+     * View ids of the mode carousel's chips. When set, only such a node is a mode chip, whatever its
+     * label: Pixel Camera labels its minibar Night Sight icon "Noční vidění" exactly like the chip,
+     * and tapping that icon opened the photo settings sheet instead of switching the mode.
+     */
+    val modeChipViewIdPatterns: List<Regex> = emptyList(),
+    /**
      * Mode key -> patterns matching that mode's chip label, in every language this profile supports.
      * Keys are the stable identifiers in the companion ([MODE_PHOTO], [MODE_NIGHT], [MODE_ASTRO]);
      * the UI stores a key and never a label.
@@ -44,13 +50,16 @@ data class CameraProfile(
     val modeAliases: Map<String, List<Regex>> = emptyMap(),
     /** Post-capture chips/thumbnails/toasts that should be dismissed between shots. */
     val postCaptureDismissPatterns: List<Regex> = emptyList(),
-    /** Nodes shown while a long exposure is still being captured or processed. */
+    /**
+     * Nodes shown while a long exposure is still being captured or processed. Optional: a disabled
+     * shutter already means busy for every app ([ShutterDispatcher.isCameraBusy]).
+     */
     val longExposureBusyPatterns: List<Regex> = emptyList(),
     /** Nodes proving the self timer is currently armed. */
     val selfTimerOnPatterns: List<Regex> = emptyList(),
     /** The "timer off" choice inside the timer picker. */
     val selfTimerOffPatterns: List<Regex> = emptyList(),
-    /** Upper bound for [com.dazix.caelis.data.AdvancedSettings.adaptiveLongExposureWait]. */
+    /** How long a tap is held back while the camera still looks busy *before* it, at most. */
     val longExposureMaxWaitMs: Long = 45_000L,
 ) {
 
@@ -87,6 +96,18 @@ data class CameraProfile(
     /** True when [label] — a localized on-screen chip label — denotes the mode [modeKey]. */
     fun matchesMode(modeKey: String?, label: CharSequence?): Boolean =
         modePatterns(modeKey).matchesAny(label)
+
+    /**
+     * True when a node with [viewId] and [label] is the chip that switches to [modeKey]. The label
+     * must denote the mode and be an eligible chip label, and with [modeChipViewIdPatterns] set the
+     * node must also be one of the carousel's chips: other controls carry the same words (the
+     * minibar icon, the shutter's "Vyfotit pomocí nočního vidění").
+     */
+    fun isModeChipFor(modeKey: String?, viewId: CharSequence?, label: CharSequence?): Boolean {
+        if (!matchesMode(modeKey, label)) return false
+        if (eligibleModeChipPatterns.isNotEmpty() && !eligibleModeChipPatterns.matchesAny(label)) return false
+        return modeChipViewIdPatterns.isEmpty() || modeChipViewIdPatterns.matchesAny(viewId)
+    }
 
     /** True when this profile can switch to [modeKey] at all; the UI uses it to enable the setting. */
     fun supportsMode(modeKey: String?): Boolean = modePatterns(modeKey).isNotEmpty()

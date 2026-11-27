@@ -39,6 +39,23 @@
     <string name="ovl_calib_saved_area">Auslöserbereich gespeichert.</string>
     <string name="ovl_calib_timed_out">Kalibrierung abgebrochen – es wurde nichts angetippt.</string>
     <string name="ovl_calib_unavailable">Die Kalibrierung konnte nicht gestartet werden. Versuchen Sie es in der App erneut.</string>
+    <string name="ovl_rec_instruction">Schalten Sie %1$s wie gewohnt in den Modus: tippen und wischen. Jeder Schritt wird an die App weitergegeben und notiert. Dann Fertig drücken.</string>
+    <string name="ovl_rec_instruction_not_launched">%1$s konnte nicht geöffnet werden. Wechseln Sie selbst dorthin, stellen Sie den Modus ein und drücken Sie Fertig.</string>
+    <string name="ovl_rec_cancel">Abbrechen</string>
+    <string name="ovl_rec_undo">Letzten entfernen</string>
+    <string name="ovl_rec_done">Fertig</string>
+    <string name="ovl_rec_timed_out">Aufnahme nach 10 Minuten abgebrochen.</string>
+    <string name="ovl_rec_service_lost">Der Bedienungshilfen-Dienst ist aus oder eine Serie läuft; Aufnahme beendet.</string>
+    <string name="ovl_rec_too_many_steps">Mehr Schritte kann ein Modus nicht haben. Fertig drücken.</string>
+    <string name="ovl_rec_shutter_refused">Das ist der Auslöser. Er wird nicht aufgenommen, sonst begänne jede Serie mit einem Foto.</string>
+    <string name="ovl_rec_gesture_failed">Der Schritt kam nicht bei der Kamera-App an und wurde nicht aufgenommen. Bitte wiederholen.</string>
+    <string name="ovl_rec_undone">Letzter Schritt entfernt. Stellen Sie die Kamera wieder wie davor ein.</string>
+    <string name="ovl_rec_nothing">Noch nichts aufgenommen. Zuerst in der Kamera-App tippen oder wischen.</string>
+    <string name="ovl_rec_saved">Modus aufgenommen. Benennen und speichern.</string>
+    <plurals name="ovl_rec_steps">
+        <item quantity="one">Aufnahme: %d Schritt</item>
+        <item quantity="other">Aufnahme: %d Schritte</item>
+    </plurals>
 
     <string name="ovl_notif_channel_name">Laufende Sitzung</string>
     <string name="ovl_notif_channel_desc">Aufgenommene Fotos und Countdown bis zur nächsten Aufnahme während einer Sitzung.</string>

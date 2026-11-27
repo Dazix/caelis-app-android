@@ -302,14 +302,18 @@ class DocumentationScreenshotsTest {
                 AdvancedScreen(
                     settings = AdvancedSettings(
                         launchCameraMode = "NIGHT_SIGHT",
-                        adaptiveLongExposureWait = true,
+                        intervalAfterCapture = true,
                         keepScreenOn = true,
                         dimOverlay = false,
                     ),
                     profile = CameraProfiles.forTrigger(TriggerMode.Timelapse("com.google.android.GoogleCamera")),
                     targetLabel = "Pixel Camera",
                     overlayAllowed = true,
+                    mediaPermissionGranted = true,
+                    mediaPermissionPartial = false,
                     onChange = {},
+                    onRequestMediaPermission = {},
+                    onOpenAppSettings = {},
                     onBack = {},
                 )
             }

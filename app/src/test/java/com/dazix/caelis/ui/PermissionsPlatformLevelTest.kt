@@ -68,6 +68,39 @@ class PermissionsPlatformLevelTest {
 
     @Test
     @Config(sdk = [30])
+    fun `android 11 asks for READ_EXTERNAL_STORAGE`() {
+        assertEquals(listOf(Manifest.permission.READ_EXTERNAL_STORAGE), Permissions.photoRequest().toList())
+    }
+
+    @Test
+    @Config(sdk = [33])
+    fun `android 13 asks for READ_MEDIA_IMAGES alone`() {
+        assertEquals(listOf(Manifest.permission.READ_MEDIA_IMAGES), Permissions.photoRequest().toList())
+    }
+
+    @Test
+    @Config(sdk = [34])
+    fun `android 14 asks for selected photos too and tells them from full access`() {
+        assertEquals(
+            listOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED),
+            Permissions.photoRequest().toList(),
+        )
+
+        // "Select photos" with the permission declared: only the selected-photos grant.
+        shadowOf(context).grantPermissions(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+        assertFalse(Permissions.read(context).readMediaImagesGranted)
+        assertTrue(Permissions.read(context).readMediaPartialGranted)
+        assertFalse(CaptureVerifier(context).available())
+
+        // "Allow all" grants both; full access wins.
+        shadowOf(context).grantPermissions(Manifest.permission.READ_MEDIA_IMAGES)
+        assertTrue(Permissions.read(context).readMediaImagesGranted)
+        assertFalse(Permissions.read(context).readMediaPartialGranted)
+        assertTrue(CaptureVerifier(context).available())
+    }
+
+    @Test
+    @Config(sdk = [30])
     fun `android 11 notifications follow the app switch, not POST_NOTIFICATIONS`() {
         assertFalse(Permissions.notificationsNeedRuntimeGrant())
         assertTrue(

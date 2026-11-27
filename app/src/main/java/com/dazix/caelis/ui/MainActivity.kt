@@ -48,6 +48,8 @@ import com.dazix.caelis.data.AdvancedSettings
 import com.dazix.caelis.domain.SessionSnapshot
 import com.dazix.caelis.domain.TapTarget
 import com.dazix.caelis.overlay.CalibrationOverlay
+import com.dazix.caelis.overlay.ModeRecordingOverlay
+import com.dazix.caelis.service.CustomReplayResult
 import com.dazix.caelis.service.CameraProfile
 import com.dazix.caelis.service.CameraProfiles
 import com.dazix.caelis.ui.location.IncomingPlaceSheet
@@ -144,16 +146,27 @@ private fun CaelisApp(viewModel: MainViewModel = viewModel()) {
         }
     }
 
-    // The answer is only re-read, never acted on: on this target SDK the dialog always offers
-    // "Select photos", which grants partial access and leaves READ_MEDIA_IMAGES denied. Switching
-    // the toggle off here would silently undo the choice the user just made, so the toggle stays on
-    // and session setup explains what full photo access is still needed for.
-    val mediaLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { viewModel.refreshSystemState() }
-
     val coroutineScope = rememberCoroutineScope()
     val toastHostState = remember(coroutineScope) { AppToastHostState(coroutineScope) }
+
+    // Read from the platform, not from the result map: a request Android no longer shows (refused
+    // twice) answers at once with everything denied, and the state is what the screens show anyway.
+    // A refusal or Back turns capture verification off, which cannot work without photos; the toast
+    // says why, since a request Android skipped showed nothing. "Select photos" keeps it on: from
+    // Android 14 that grants READ_MEDIA_VISUAL_USER_SELECTED only (both are declared; see the
+    // manifest for what happened while only one was), and the screen points to the app's settings.
+    // The interval after capture is never switched off here: it works without photos.
+    val mediaLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        viewModel.refreshSystemState()
+        val now = Permissions.read(context)
+        val access = PhotoAccessPrompt.access(now.readMediaImagesGranted, now.readMediaPartialGranted)
+        if (setup.verifyCaptures && PhotoAccessPrompt.verifyOffAfterAnswer(access)) {
+            viewModel.updateSetup { it.copy(verifyCaptures = false) }
+            Toast.makeText(context, R.string.setup_verify_turned_off, Toast.LENGTH_LONG).show()
+        }
+    }
 
     // Calibration is not an activity result any more: the capture surface is an overlay window put up
     // over the *real* camera app, so it outlives this activity going to the background and reports
@@ -170,6 +183,45 @@ private fun CaelisApp(viewModel: MainViewModel = viewModel()) {
                 context.launchSafely(Permissions.overlaySettings(context), toastHostState)
             }
         }
+    }
+
+    // Recording a mode is an overlay over the camera app, like calibration, and reports back through
+    // ModeRecordingOverlay.lastResult, which the view model collects into the draft.
+    val startModeRecording: () -> Unit = {
+        val pkg = viewModel.modeDraft.value.packageName
+        if (pkg != null) {
+            when (ModeRecordingOverlay.start(context, pkg)) {
+                ModeRecordingOverlay.StartResult.STARTED -> Unit
+                ModeRecordingOverlay.StartResult.NO_OVERLAY_PERMISSION -> {
+                    toastHostState.showToast(overlayMissingMessage)
+                    context.launchSafely(Permissions.overlaySettings(context), toastHostState)
+                }
+                ModeRecordingOverlay.StartResult.NO_SERVICE ->
+                    toastHostState.showToast(R.string.custom_mode_needs_service)
+                ModeRecordingOverlay.StartResult.FAILED ->
+                    toastHostState.showToast(R.string.ovl_calib_unavailable)
+            }
+        }
+    }
+    // The test runs over the camera app, where our own toast host is not on screen: a system toast is.
+    val testResources = LocalResources.current
+    val testModeDraft: () -> Unit = {
+        val started = viewModel.testModeDraft { result ->
+            val message = when (result) {
+                null -> testResources.getString(R.string.custom_mode_test_no_app)
+                CustomReplayResult.Switched -> testResources.getString(R.string.custom_mode_test_switched)
+                CustomReplayResult.Already -> testResources.getString(R.string.custom_mode_test_already)
+                CustomReplayResult.Cancelled -> testResources.getString(R.string.custom_mode_test_cancelled)
+                is CustomReplayResult.StepNotFound ->
+                    testResources.getString(R.string.custom_mode_test_step_failed, result.index + 1)
+                is CustomReplayResult.ScreenMismatch ->
+                    testResources.getString(R.string.custom_mode_test_screen_mismatch, result.index + 1)
+                is CustomReplayResult.GestureRejected ->
+                    testResources.getString(R.string.custom_mode_test_step_failed, result.index + 1)
+            }
+            Toast.makeText(context.applicationContext, message, Toast.LENGTH_LONG).show()
+        }
+        if (!started) toastHostState.showToast(R.string.custom_mode_needs_service)
     }
 
     // The profile the *session* will run with, not the one the package alone suggests: a periodic tap
@@ -235,6 +287,8 @@ private fun CaelisApp(viewModel: MainViewModel = viewModel()) {
                             debugPreferences = debugPreferences,
                             homeScrollState = homeScrollState,
                             startCalibration = startCalibration,
+        startModeRecording = startModeRecording,
+        testModeDraft = testModeDraft,
                             onRequestNotifications = {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                     notificationsLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -243,7 +297,7 @@ private fun CaelisApp(viewModel: MainViewModel = viewModel()) {
                                 }
                             },
                             onRequestMediaPermission = {
-                                mediaLauncher.launch(Permissions.photos())
+                                mediaLauncher.launch(Permissions.photoRequest())
                             },
                         )
                     }
@@ -305,10 +359,14 @@ private fun CaelisScreen(
     debugPreferences: com.dazix.caelis.data.DebugPreferences,
     homeScrollState: ScrollState,
     startCalibration: () -> Unit,
+    startModeRecording: () -> Unit,
+    testModeDraft: () -> Unit,
     onRequestNotifications: () -> Unit,
     onRequestMediaPermission: () -> Unit,
 ) {
     val context = LocalContext.current
+    val customModes by viewModel.customModes.collectAsStateWithLifecycle()
+    val modeDraft by viewModel.modeDraft.collectAsStateWithLifecycle()
     val horizonSettings by viewModel.horizonSettings.collectAsStateWithLifecycle()
     val arCoreSettings by viewModel.arCoreSettings.collectAsStateWithLifecycle()
     val horizonState by viewModel.horizonState.collectAsStateWithLifecycle()
@@ -366,6 +424,8 @@ private fun CaelisScreen(
             onOpenAccessibilitySettings = openAccessibilitySettings,
             onOpenOverlaySettings = { context.launchSafely(Permissions.overlaySettings(context)) },
             onDismissServiceMessage = viewModel::dismissServiceMessage,
+            launchMode = LaunchModeOptions.inForce(advanced, profile, setup.targetPackage, customModes)
+                ?.let { launchModeName(it) },
         )
 
         Screen.SETUP -> SetupScreen(
@@ -392,7 +452,31 @@ private fun CaelisScreen(
             profile = profile,
             targetLabel = setup.targetPackage?.let { setup.targetLabel ?: it },
             overlayAllowed = permissions.canDrawOverlays,
+            mediaPermissionGranted = permissions.readMediaImagesGranted,
+            mediaPermissionPartial = permissions.readMediaPartialGranted,
             onChange = { updated -> viewModel.updateAdvanced { updated } },
+            onRequestMediaPermission = onRequestMediaPermission,
+            onOpenAppSettings = { context.launchSafely(Permissions.appInfo(context)) },
+            onBack = viewModel::back,
+            targetPackage = setup.targetPackage,
+            customModes = customModes,
+            onManageCustomModes = viewModel::openCustomModes,
+        )
+
+        Screen.CUSTOM_MODES -> CustomModesScreen(
+            modes = customModes,
+            onNew = viewModel::newCustomMode,
+            onEdit = viewModel::editCustomMode,
+            onBack = viewModel::back,
+        )
+
+        Screen.CUSTOM_MODE_EDIT -> CustomModeEditScreen(
+            draft = modeDraft,
+            onChange = viewModel::updateModeDraft,
+            onRecord = startModeRecording,
+            onTest = testModeDraft,
+            onSave = viewModel::saveModeDraft,
+            onDelete = viewModel::deleteModeDraft,
             onBack = viewModel::back,
         )
 

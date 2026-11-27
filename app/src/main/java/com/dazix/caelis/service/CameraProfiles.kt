@@ -6,7 +6,7 @@ import com.dazix.caelis.domain.TriggerMode
 // several profiles, which is why they are file-level rather than repeated per entry.
 private val photoAliases: List<Regex> = pattern(
     "\\bphoto\\b",
-    "\\bfoto\\b|\\bfotografie\\b",
+    "\\bfoto\\b|\\bfotka\\b|\\bfotografie\\b",
 )
 
 private val nightAliases: List<Regex> = pattern(
@@ -85,8 +85,8 @@ object CameraProfiles {
     /**
      * Google Camera (Pixel). HDR+ and especially Night Sight keep the pipeline busy far longer than
      * a plain AOSP capture, so the latency and the interval floor are both raised and the busy
-     * patterns let [com.dazix.caelis.data.AdvancedSettings.adaptiveLongExposureWait] hold
-     * the next shot until the frame really landed.
+     * patterns tell [com.dazix.caelis.data.AdvancedSettings.intervalAfterCapture] that a
+     * capture is still running.
      */
     private val pixelCamera: CameraProfile = CameraProfile(
         id = "pixel-camera",
@@ -111,10 +111,13 @@ object CameraProfiles {
         declaredMinIntervalMs = 1_500L,
         photoModeIndicatorPatterns = pattern(
             "\\bphoto\\b",
-            "\\bfoto(grafie)?\\b",
+            "\\bfoto(grafie|ka)?\\b",
         ),
         modeChipPatterns = photoAliases + nightAliases + astroAliases + portraitAliases +
             pattern("\\bmotion\\b", "\\bpohyb\\b"),
+        // The minibar's Night Sight icon (`minibar_item_ext2`, "Noční vidění") sits above the
+        // carousel in the tree with the chip's own label; only the carousel switches the mode.
+        modeChipViewIdPatterns = pattern(".*/mode_chip_text$"),
         modeAliases = mapOf(
             CameraProfile.MODE_PHOTO to photoAliases,
             CameraProfile.MODE_NIGHT to nightAliases,
@@ -136,6 +139,10 @@ object CameraProfiles {
             "držte|drzte",
             "zpracování|zpracovani",
             "\\bsnímání\\b|\\bsnimani\\b",
+            // During Astro (Pixel 7 Pro, measured) the shutter itself reads this for the whole
+            // exposure, and pressing it cancels the photo.
+            "zrušit fotku|zrusit fotku",
+            "cancel (photo|capture)",
         ),
         selfTimerOnPatterns = pattern(
             "timer (3|5|10)",

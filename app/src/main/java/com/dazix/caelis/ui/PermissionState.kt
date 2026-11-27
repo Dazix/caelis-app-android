@@ -79,6 +79,21 @@ object Permissions {
             Manifest.permission.READ_EXTERNAL_STORAGE
         }
 
+    /**
+     * What to ask for when photo access is wanted. From Android 14 the selected-photos permission is
+     * asked together with [photos], as the platform expects of an app that declares it, so that
+     * "Select photos" is answered with it and not with a one-time READ_MEDIA_IMAGES.
+     */
+    fun photoRequest(): Array<String> =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            arrayOf(
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+            )
+        } else {
+            arrayOf(photos())
+        }
+
     /** Whether the notification permission is a runtime dialog at all (Android 13+). */
     fun notificationsNeedRuntimeGrant(): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU

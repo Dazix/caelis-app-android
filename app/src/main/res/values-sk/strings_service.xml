@@ -11,6 +11,8 @@
          same thing as session_warning_capture_unverified, which says a photo is actually missing. -->
     <string name="session_warning_verification_unavailable">Fotky v telefóne sa nepodarilo prečítať, snímka preto nebola skontrolovaná.</string>
     <string name="session_warning_long_exposure_timeout">Fotoaparát stále pracuje; snímka sa napriek tomu nasníma.</string>
+    <string name="session_warning_custom_mode_missing">Nahraný režim fotoaparátu už neexistuje; fotí sa v aktuálnom režime.</string>
+    <string name="session_warning_custom_mode_failed">Režim „%1$s“: krok %2$d sa nenašiel. Nahrajte režim znova.</string>
     <string name="session_warning_inexact_alarms">Presné budíky nie sú povolené, dlhé intervaly sa môžu oneskoriť.</string>
     <string name="session_stopped_service_lost">Služba dostupnosti bola vypnutá, séria sa zastavila.</string>
 </resources>

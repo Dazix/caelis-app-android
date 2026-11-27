@@ -371,7 +371,37 @@ Each of these was found by review or on the device and is now covered by a test.
   are listed project through the scene's `SkyProjector`, updated in the same call that sets the
   Filament camera; the marks themselves are projected by the GPU from that camera.
 - **Timing is absolute.** Shot times come from `IntervalSchedule.targetElapsedFor`, never "now +
-  interval". A late shot must not push the series.
+  interval". A late shot must not push the series. The one exception is the user's own switch
+  **Interval after the photo is finished** (`AdvancedSettings.intervalAfterCapture`, time-lapse only):
+  the next shot is one interval after the capture *ended*, done by moving the anchor
+  (`SessionTiming.anchorShiftAfterCapture`), never by "now + interval".
+- **Never tap a busy camera.** On a Pixel 7 Pro, Astro runs up to 4 min and the shutter reads "Zrušit
+  fotku" (cancel photo), disabled, for the whole exposure; a 10 s series cancelled every photo. With
+  `intervalAfterCapture` a capture ends when its photo appears in MediaStore (the row is pending, so
+  invisible, until written: ~4 s after the UI came back), or without photo access when the camera is
+  idle again; busy is a profile busy pattern **or any shutter node shown disabled**
+  (`ShutterDispatcher.isCameraBusy`), which is what makes it work for camera apps without a profile.
+  Capped at 10 min (`SessionTiming.captureWaitStep`), then the series goes on with a warning.
+- **A mode chip is found where the modes are.** The Pixel's minibar Night Sight icon is labelled
+  "Noční vidění" exactly like the carousel chip and comes first in the tree; clicking it opened the
+  photo settings sheet. `CameraProfile.modeChipViewIdPatterns` (`mode_chip_text`) restricts the
+  switch to the carousel, and the Czech photo chip is "Fotka". The mode is switched as soon as the
+  camera app is in front after Start, retried while its chip is not drawn yet, and the first shot
+  waits `MODE_SETTLE_MS` (5 s) after a switch: Astro engages only some time after Night Sight.
+- **A recorded mode is replayed by element first, by position only on the same screen, and never
+  past a step it cannot find.** `launchCameraMode = "custom:<id>"` replays a `CustomCameraMode`
+  (`domain/cameramode/`) the user recorded over the camera app (`ModeRecordingService`, which passes
+  every gesture on through `ShutterDispatcher.passThrough` and refuses the shutter).
+  `StepMatchPolicy`: view id + label, then a unique view id, then a unique label on an element with
+  no other view id (the minibar icon again); a recorded element that is not found is waited for and
+  then stops the replay with a warning, never replaced by its position. Swipes and taps without an
+  element replay by position, only when the natural screen size equals the recording's. The proof
+  (`ModeProofPolicy`, the one element that became selected) skips the replay when the mode is on
+  already. The recording surface goes untouchable *before* it reads the camera's screen or passes a
+  gesture on, and waits 100 ms for that to take effect: while it takes touches it covers the camera,
+  whose window the accessibility service then does not get (no element, no proof), and a gesture
+  dispatched at once landed on the surface itself. What it stores (positions, view ids, labels) is named in the accessibility disclosure,
+  the service description and the privacy policy; keep all three true when it changes.
 - **A tap is not a shot.** With verification armed, `shotsTaken` moves only when verification resolves
   (`PendingShot` / `VerifyStep.resolvesShot`). A retry never increments it; a shot whose every gesture
   the platform refused is not counted at all; a shot is never counted twice on stop/pause.

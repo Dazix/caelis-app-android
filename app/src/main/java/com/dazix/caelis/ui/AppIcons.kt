@@ -959,6 +959,23 @@ object AppIcons {
         }
     }
 
+    /** Warning: triangle outline with an exclamation stem and dot. */
+    val Warning: ImageVector by lazy {
+        icon("Warning") {
+            strokePath {
+                moveTo(12f, 3.5f)
+                lineTo(21.5f, 20f)
+                lineTo(2.5f, 20f)
+                close()
+                moveTo(12f, 9.5f)
+                lineTo(12f, 14f)
+            }
+            fillPath {
+                circle(centerX = 12f, centerY = 16.9f, radius = 1.2f)
+            }
+        }
+    }
+
     private fun icon(name: String, paths: ImageVector.Builder.() -> Unit): ImageVector =
         ImageVector.Builder(
             name = name,
