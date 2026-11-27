@@ -23,7 +23,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -34,7 +34,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dazix.caelis.R
 import com.dazix.caelis.data.studio.FrameSource
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import com.dazix.caelis.ui.CardTone
+import com.dazix.caelis.ui.Permissions
 import com.dazix.caelis.ui.ScreenScaffold
 import com.dazix.caelis.ui.SectionCard
 import com.dazix.caelis.ui.SegmentedChoice
@@ -45,8 +49,8 @@ import com.dazix.caelis.domain.studio.Resolution
 import com.dazix.caelis.domain.studio.StudioOptions
 
 /**
- * Studio: building a video or a stacked picture from a finished session's frames. This first version
- * only grants the folder and shows which sessions it can find frames for.
+ * Studio: building a video or a stacked picture from a finished session's photos, which it finds
+ * itself with photo access (MediaStore), or in one granted folder without it.
  */
 @Composable
 fun StudioScreen(
@@ -54,10 +58,21 @@ fun StudioScreen(
     viewModel: StudioViewModel = viewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { viewModel.refresh() }
+    // On every resume, not only on entry: coming back from the app settings may have granted access.
+    LifecycleResumeEffect(Unit) {
+        viewModel.refresh()
+        onPauseOrDispose { }
+    }
     JobLifecycle(viewModel, running = state.job is StudioJob.Running)
+    val context = LocalContext.current
     val pickFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
         viewModel.onFolderPicked(it)
+    }
+    // After a refusal the system may not ask again (twice refused), so the button becomes the settings.
+    var refused by rememberSaveable { mutableStateOf(false) }
+    val askPhotos = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        refused = it[Permissions.photos()] != true
+        viewModel.refresh()
     }
 
     ScreenScaffold(
@@ -65,33 +80,13 @@ fun StudioScreen(
         subtitle = stringResource(R.string.studio_subtitle),
         onBack = onBack,
     ) {
-        SectionCard(
-            title = stringResource(R.string.studio_folder_title),
-            subtitle = if (state.folderGranted) {
-                state.folderName ?: stringResource(R.string.studio_folder_unnamed)
-            } else {
-                stringResource(R.string.studio_folder_missing)
-            },
-            tone = if (state.folderGranted || state.loading) CardTone.NEUTRAL else CardTone.ACCENT,
-        ) {
-            if (state.folderError) {
-                Text(
-                    text = stringResource(R.string.studio_folder_error),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Button(
-                onClick = { pickFolder.launch(FrameSource.CAMERA_FOLDER_HINT) },
-                modifier = Modifier.heightIn(min = 48.dp),
-            ) {
-                Text(
-                    stringResource(
-                        if (state.folderGranted) R.string.studio_folder_change else R.string.studio_folder_choose,
-                    ),
-                )
-            }
-        }
+        PhotosCard(
+            state = state,
+            refused = refused,
+            onAllow = { askPhotos.launch(Permissions.photoRequest()) },
+            onSettings = { runCatching { context.startActivity(Permissions.appInfo(context)) } },
+            onPickFolder = { pickFolder.launch(FrameSource.CAMERA_FOLDER_HINT) },
+        )
 
         val options by viewModel.options.collectAsStateWithLifecycle()
         OptionsCard(options = options, enabled = state.job !is StudioJob.Running, onChange = viewModel::updateOptions)
@@ -118,6 +113,58 @@ fun StudioScreen(
     }
 }
 
+
+/**
+ * Where the photos come from. Photo access is the way: Studio finds a session's photos itself. One
+ * granted folder is the quiet fallback without it, offered only as a text button.
+ */
+@Composable
+private fun PhotosCard(
+    state: StudioUiState,
+    refused: Boolean,
+    onAllow: () -> Unit,
+    onSettings: () -> Unit,
+    onPickFolder: () -> Unit,
+) {
+    val subtitle = when {
+        state.photoAccess -> stringResource(R.string.studio_photos_granted)
+        state.partialPhotoAccess -> stringResource(R.string.studio_photos_partial)
+        state.folderGranted -> state.folderName ?: stringResource(R.string.studio_folder_unnamed)
+        else -> stringResource(R.string.studio_photos_missing)
+    }
+    val wanting = !state.loading && !state.photoAccess && !state.folderGranted
+    SectionCard(
+        title = stringResource(R.string.studio_photos_title),
+        subtitle = subtitle,
+        tone = if (wanting) CardTone.ACCENT else CardTone.NEUTRAL,
+    ) {
+        if (state.photoAccess || state.loading) return@SectionCard
+        if (state.folderError) {
+            Text(
+                text = stringResource(R.string.studio_folder_error),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        // Asking again with only selected photos opens just the picker for more of them.
+        if (state.partialPhotoAccess || refused) {
+            Button(onClick = onSettings, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.studio_photos_settings))
+            }
+        } else {
+            Button(onClick = onAllow, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.studio_photos_allow))
+            }
+        }
+        TextButton(onClick = onPickFolder, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(
+                stringResource(
+                    if (state.folderGranted) R.string.studio_folder_change else R.string.studio_folder_instead,
+                ),
+            )
+        }
+    }
+}
 
 /** One set of options for every output; read when a job starts, so a change mid-run waits for the next. */
 @Composable

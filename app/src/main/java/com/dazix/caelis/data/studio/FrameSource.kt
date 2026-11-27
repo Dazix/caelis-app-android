@@ -8,12 +8,11 @@ import androidx.core.content.edit
 import com.dazix.caelis.domain.studio.FrameFile
 
 /**
- * The folder Studio reads frames from, granted once by the user through the system's folder picker.
- *
- * The app holds no media permission (Google Play refused READ_MEDIA_IMAGES for an app that is not a
- * gallery), so a document tree is the only way to read a whole session: the photo picker stops at
- * about a hundred items, a time-lapse is several hundred frames. The grant is persisted, and it is
- * read access only.
+ * The fallback for Studio without photo access: one folder, granted by the user through the
+ * system's folder picker. It sees only that folder, carries no owner (a screenshot saved there
+ * counts), and is the only source of a session's videos, as READ_MEDIA_VIDEO is not declared. The
+ * photo picker is no substitute: it stops at about a hundred items, a time-lapse is several hundred
+ * frames. The grant is persisted, and it is read access only.
  */
 class FrameSource(context: Context) {
 

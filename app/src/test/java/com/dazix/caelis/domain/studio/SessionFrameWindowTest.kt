@@ -58,4 +58,49 @@ class SessionFrameWindowTest {
     fun anEmptyOrInvertedWindowSelectsNothing() {
         assertTrue(SessionFrameWindow.select(listOf(file("a", start)), end, start, MediaKind.IMAGES).isEmpty())
     }
+
+    @Test
+    fun mediaStoreIdsWithinOneSecondKeepTheShotOrder() {
+        // DATE_ADDED has whole seconds; ids are numbered in insertion order, and as text "10" < "9".
+        val second = start + 5_000
+        val files = listOf(file("10", second), file("9", second), file("11", second))
+        assertEquals(listOf("9", "10", "11"), SessionFrameWindow.select(files, start, end, MediaKind.IMAGES).map { it.id })
+    }
+
+    @Test
+    fun aPhotoAnotherAppSavedDuringTheSessionIsLeftOut() {
+        val camera = "com.google.android.GoogleCamera"
+        val files = listOf(
+            file("1", start + 1).copy(owner = camera),
+            file("2", start + 2).copy(owner = "com.android.systemui"),
+            file("3", start + 3).copy(owner = null),
+        )
+        assertEquals(
+            listOf("1", "3"),
+            SessionFrameWindow.select(files, start, end, MediaKind.IMAGES, cameraPackage = camera).map { it.id },
+        )
+        // Without a known camera app nothing is filtered by owner.
+        assertEquals(listOf("1", "2", "3"), SessionFrameWindow.select(files, start, end, MediaKind.IMAGES).map { it.id })
+    }
+
+    @Test
+    fun theSpanCoversEverySessionWithItsMargins() {
+        val a = SessionRecord(start, end, 10, null)
+        val b = SessionRecord(start + 10_000_000, start + 11_000_000, 5, null)
+        val span = SessionFrameWindow.span(listOf(b, a))!!
+        assertEquals(start - SessionFrameWindow.BEFORE_MS, span.first)
+        assertEquals(start + 11_000_000 + SessionFrameWindow.AFTER_MS, span.last)
+        assertEquals(null, SessionFrameWindow.span(emptyList()))
+    }
+
+    @Test
+    fun photoAccessFindsPhotosAndTheFolderIsOnlyTheFallback() {
+        assertEquals(FrameOrigin.MEDIA_STORE, FrameOrigin.of(MediaKind.IMAGES, photoAccess = true, folderGranted = true))
+        assertEquals(FrameOrigin.MEDIA_STORE, FrameOrigin.of(MediaKind.IMAGES, photoAccess = true, folderGranted = false))
+        assertEquals(FrameOrigin.FOLDER, FrameOrigin.of(MediaKind.IMAGES, photoAccess = false, folderGranted = true))
+        assertEquals(FrameOrigin.NONE, FrameOrigin.of(MediaKind.IMAGES, photoAccess = false, folderGranted = false))
+        // Videos need the folder: there is no video permission.
+        assertEquals(FrameOrigin.FOLDER, FrameOrigin.of(MediaKind.VIDEOS, photoAccess = true, folderGranted = true))
+        assertEquals(FrameOrigin.NONE, FrameOrigin.of(MediaKind.VIDEOS, photoAccess = true, folderGranted = false))
+    }
 }

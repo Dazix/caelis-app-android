@@ -7,7 +7,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dazix.caelis.data.SessionHistoryStore
 import com.dazix.caelis.data.studio.FrameSource
+import com.dazix.caelis.data.studio.MediaStoreFrames
 import com.dazix.caelis.data.studio.StudioSettingsStore
+import com.dazix.caelis.domain.studio.FrameFile
+import com.dazix.caelis.domain.studio.FrameOrigin
 import com.dazix.caelis.domain.studio.MediaKind
 import com.dazix.caelis.domain.studio.StudioOptions
 import com.dazix.caelis.domain.studio.SessionFrameWindow
@@ -17,6 +20,7 @@ import com.dazix.caelis.media.StackResult
 import com.dazix.caelis.media.StackRunner
 import com.dazix.caelis.media.TimelapseOptions
 import com.dazix.caelis.media.VideoEncoder
+import com.dazix.caelis.ui.Permissions
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,8 +36,8 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * A finished session and how many of its photos and videos the granted folder holds (null: no
- * folder to look in).
+ * A finished session and how many of its photos and videos were found (null: nowhere to look, no
+ * photo access and no folder).
  */
 data class StudioSession(val record: SessionRecord, val photos: Int?, val videos: Int?)
 
@@ -58,6 +62,10 @@ sealed interface StudioJob {
 
 data class StudioUiState(
     val loading: Boolean = true,
+    /** Full photo access: Studio finds each session's photos itself (MediaStore). */
+    val photoAccess: Boolean = false,
+    /** Only selected photos are shared: none of a later session's photos are visible. */
+    val partialPhotoAccess: Boolean = false,
     /** Null when no folder is granted, or the grant was revoked in the system settings. */
     val folderName: String? = null,
     val folderGranted: Boolean = false,
@@ -70,6 +78,7 @@ data class StudioUiState(
 class StudioViewModel(application: Application) : AndroidViewModel(application) {
 
     private val frames = FrameSource(application)
+    private val media = MediaStoreFrames(application)
     private val history = SessionHistoryStore(application)
     private val stacker = StackRunner(application)
     private val encoder = VideoEncoder(application)
@@ -134,11 +143,8 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
 
     /** The output and how many inputs were left out, or null when there was nothing to build from. */
     private suspend fun perform(session: SessionRecord, action: StudioAction, progress: (Int?) -> Unit): Pair<Uri, Int>? {
-        val tree = frames.treeUri() ?: return null
-        val listed = frames.list(tree)
         val kind = if (action == StudioAction.JOIN) MediaKind.VIDEOS else MediaKind.IMAGES
-        val picked = SessionFrameWindow.select(listed, session.startWallMs, session.endWallMs, kind)
-            .map { frames.documentUri(tree, it) }
+        val picked = sessionUris(session, kind)
         if (picked.isEmpty()) return null
         val name = outputName(session, action)
         // Read once at the start: changing an option during a run applies to the next one.
@@ -191,21 +197,54 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
         return "CAELIS_${action.name}_$stamp"
     }
 
+    private fun photoAccess(): Boolean = Permissions.granted(getApplication(), Permissions.photos())
+
+    /** A session's photos or videos, from wherever [FrameOrigin.of] says to look. */
+    private fun sessionUris(session: SessionRecord, kind: MediaKind): List<Uri> {
+        val tree = frames.treeUri()
+        return when (FrameOrigin.of(kind, photoAccess(), tree != null)) {
+            FrameOrigin.MEDIA_STORE -> {
+                val span = SessionFrameWindow.span(listOf(session)) ?: return emptyList()
+                select(media.list(span), session, kind).map(media::uri)
+            }
+            FrameOrigin.FOLDER -> select(frames.list(tree!!), session, kind).map { frames.documentUri(tree, it) }
+            FrameOrigin.NONE -> emptyList()
+        }
+    }
+
+    private fun select(files: List<FrameFile>, r: SessionRecord, kind: MediaKind) =
+        SessionFrameWindow.select(files, r.startWallMs, r.endWallMs, kind, cameraPackage = r.targetPackage)
+
     private fun load(): StudioUiState {
         val records = history.all()
+        val photoAccess = photoAccess()
         val tree = frames.treeUri()
-            ?: return StudioUiState(loading = false, sessions = records.map { StudioSession(it, null, null) })
-        val listed = runCatching { frames.list(tree) }.getOrNull()
+        val folder = tree?.let { runCatching { frames.list(it) }.getOrNull() }
+        // One query for every session; a failure leaves the counts unknown rather than zero.
+        val rows = if (photoAccess) {
+            SessionFrameWindow.span(records)?.let { span -> runCatching { media.list(span) }.getOrNull() } ?: emptyList()
+        } else {
+            null
+        }
+        fun found(kind: MediaKind): List<FrameFile>? = when (FrameOrigin.of(kind, photoAccess, tree != null)) {
+            FrameOrigin.MEDIA_STORE -> rows
+            FrameOrigin.FOLDER -> folder
+            FrameOrigin.NONE -> null
+        }
+        val images = found(MediaKind.IMAGES)
+        val videos = found(MediaKind.VIDEOS)
         return StudioUiState(
             loading = false,
-            folderName = frames.folderName(tree),
-            folderGranted = true,
-            folderError = listed == null,
+            photoAccess = photoAccess,
+            partialPhotoAccess = !photoAccess && Permissions.partialPhotoAccess(getApplication()),
+            folderName = tree?.let { frames.folderName(it) },
+            folderGranted = tree != null,
+            folderError = tree != null && folder == null,
             sessions = records.map { r ->
                 StudioSession(
                     record = r,
-                    photos = listed?.let { SessionFrameWindow.select(it, r.startWallMs, r.endWallMs, MediaKind.IMAGES).size },
-                    videos = listed?.let { SessionFrameWindow.select(it, r.startWallMs, r.endWallMs, MediaKind.VIDEOS).size },
+                    photos = images?.let { select(it, r, MediaKind.IMAGES).size },
+                    videos = videos?.let { select(it, r, MediaKind.VIDEOS).size },
                 )
             },
         )

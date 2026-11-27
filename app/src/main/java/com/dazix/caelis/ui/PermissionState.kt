@@ -114,7 +114,7 @@ object Permissions {
      * True while the app has *only* the selected-photos grant. Full access implies it, so the full
      * grant wins. Partial access exists from Android 14; below it there is nothing to ask.
      */
-    private fun partialPhotoAccess(context: Context): Boolean =
+    fun partialPhotoAccess(context: Context): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
             !granted(context, Manifest.permission.READ_MEDIA_IMAGES) &&
             granted(context, Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
