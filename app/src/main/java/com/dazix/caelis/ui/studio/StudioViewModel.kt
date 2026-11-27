@@ -15,6 +15,8 @@ import com.dazix.caelis.domain.studio.MediaKind
 import com.dazix.caelis.domain.studio.StudioOptions
 import com.dazix.caelis.domain.studio.SessionFrameWindow
 import com.dazix.caelis.domain.studio.SessionRecord
+import com.dazix.caelis.domain.studio.OutputName
+import com.dazix.caelis.media.OutputWriter
 import com.dazix.caelis.media.StackKind
 import com.dazix.caelis.media.StackResult
 import com.dazix.caelis.media.StackRunner
@@ -37,9 +39,14 @@ import java.util.Locale
 
 /**
  * A finished session and how many of its photos and videos were found (null: nowhere to look, no
- * photo access and no folder).
+ * photo access and no folder), with the photos' URIs in shot order for the previews.
  */
-data class StudioSession(val record: SessionRecord, val photos: Int?, val videos: Int?)
+data class StudioSession(
+    val record: SessionRecord,
+    val photos: Int?,
+    val videos: Int?,
+    val photoUris: List<Uri> = emptyList(),
+)
 
 enum class StudioAction(val outputMime: String) {
     VIDEO("video/mp4"),
@@ -56,7 +63,15 @@ sealed interface StudioJob {
 
     /** [percent] null: not measurable yet (reading the frames before the export starts). */
     data class Running(override val sessionStart: Long, override val action: StudioAction, val percent: Int?) : StudioJob
-    data class Done(override val sessionStart: Long, override val action: StudioAction, val uri: Uri, val skipped: Int) : StudioJob
+    /** [name] null: the gallery no longer knows the file; [renameFailed]: the last rename was refused. */
+    data class Done(
+        override val sessionStart: Long,
+        override val action: StudioAction,
+        val uri: Uri,
+        val skipped: Int,
+        val name: String? = null,
+        val renameFailed: Boolean = false,
+    ) : StudioJob
     data class Failed(override val sessionStart: Long, override val action: StudioAction) : StudioJob
 }
 
@@ -135,8 +150,10 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
             }
             // The class only: an export exception's message can carry the file's URI.
             if (error != null) Log.w(TAG, "$action failed: ${error.javaClass.simpleName}")
-            val job = outcome.getOrNull()?.let { (uri, skipped) -> StudioJob.Done(key, action, uri, skipped) }
-                ?: StudioJob.Failed(key, action)
+            val job = outcome.getOrNull()?.let { (uri, skipped) ->
+                val name = withContext(Dispatchers.IO) { OutputWriter.displayName(getApplication(), uri) }
+                StudioJob.Done(key, action, uri, skipped, name)
+            } ?: StudioJob.Failed(key, action)
             state.update { it.copy(job = job) }
         }
     }
@@ -149,7 +166,10 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
         val name = outputName(session, action)
         // Read once at the start: changing an option during a run applies to the next one.
         val chosen = optionsState.value
-        val video = TimelapseOptions(chosen.fps, chosen.resolution, chosen.aspect, chosen.deflicker)
+        val video = TimelapseOptions(
+            chosen.fps, chosen.resolution, chosen.aspect, chosen.deflicker, chosen.framing,
+            chosen.zoom, chosen.cropX, chosen.cropY,
+        )
         val percent = { done: Int, total: Int -> progress(if (total > 0) done * 100 / total else null) }
         return when (action) {
             StudioAction.TRAILS, StudioAction.AVERAGE -> {
@@ -190,6 +210,26 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
         running?.cancel()
         running = null
         state.update { s -> if (s.job is StudioJob.Running) s.copy(job = null) else s }
+    }
+
+    /** Renames the finished output; [typed] is cleaned and keeps the file's extension (OutputName). */
+    fun rename(typed: String) {
+        val done = state.value.job as? StudioJob.Done ?: return
+        val current = done.name ?: return
+        val wanted = OutputName.renamed(current, typed)
+        if (wanted == null) {
+            state.update { it.copy(job = done.copy(renameFailed = true)) }
+            return
+        }
+        if (wanted == current) return
+        viewModelScope.launch {
+            val kept = withContext(Dispatchers.IO) { OutputWriter.rename(getApplication(), done.uri, wanted) }
+            state.update { s ->
+                val job = s.job as? StudioJob.Done
+                if (job?.uri != done.uri) return@update s
+                s.copy(job = job.copy(name = kept ?: job.name, renameFailed = kept == null))
+            }
+        }
     }
 
     private fun outputName(session: SessionRecord, action: StudioAction): String {
@@ -241,10 +281,17 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
             folderGranted = tree != null,
             folderError = tree != null && folder == null,
             sessions = records.map { r ->
+                val picked = images?.let { select(it, r, MediaKind.IMAGES) }
+                // The same source the counts came from, so a preview never shows a photo a job would skip.
+                val uriOf: (FrameFile) -> Uri = when (FrameOrigin.of(MediaKind.IMAGES, photoAccess, tree != null)) {
+                    FrameOrigin.FOLDER -> { file -> frames.documentUri(tree!!, file) }
+                    else -> media::uri
+                }
                 StudioSession(
                     record = r,
-                    photos = images?.let { select(it, r, MediaKind.IMAGES).size },
+                    photos = picked?.size,
                     videos = videos?.let { select(it, r, MediaKind.VIDEOS).size },
+                    photoUris = picked?.map(uriOf).orEmpty(),
                 )
             },
         )

@@ -53,7 +53,13 @@
     <string name="studio_options_fps">Snímok za sekundu</string>
     <string name="studio_options_resolution">Rozlíšenie</string>
     <string name="studio_options_aspect">Pomer strán</string>
-    <string name="studio_options_aspect_original">Celý</string>
+    <string name="studio_options_aspect_original">Originál</string>
+    <string name="studio_framing_crop">Orezať</string>
+    <string name="studio_framing_fit">Čierne okraje</string>
+    <string name="studio_framing_drag">Potiahnutím fotky vyberte, čo zostane v zábere.</string>
+    <string name="studio_framing_bars">Celá fotka, zvyšok vyplnia čierne okraje.</string>
+    <string name="studio_zoom_in">Priblížiť</string>
+    <string name="studio_zoom_out">Oddialiť</string>
     <string name="studio_options_deflicker">Vyrovnať blikanie</string>
     <string name="studio_options_deflicker_summary">Vyrovná skoky jasu medzi fotkami, stmievanie pri západe zostane</string>
     <string name="studio_options_join_mute">Spojiť videá bez zvuku</string>
@@ -71,6 +77,40 @@
     <string name="studio_action_video">Video</string>
     <string name="studio_action_growing">Rastúce stopy</string>
     <string name="studio_action_join">Spojiť videá</string>
+    <string name="studio_action_video_summary">Časozberné video zo všetkých fotiek</string>
+    <string name="studio_action_trails_summary">Jedna snímka s dráhami hviezd po oblohe</string>
+    <string name="studio_action_growing_summary">Video, v ktorom stopy postupne rastú</string>
+    <string name="studio_action_average_summary">Jedna snímka spriemerovaná zo všetkých fotiek, s menším šumom</string>
+    <string name="studio_action_join_summary">Jedno video z klipov série</string>
+    <string name="studio_action_start">Vytvoriť: %1$s</string>
+    <string name="studio_session_preview">Fotka %1$d</string>
+    <string name="studio_photo_info">Informácie o fotke</string>
+    <string name="studio_info_name">Názov</string>
+    <string name="studio_info_taken">Nasnímané</string>
+    <string name="studio_info_size">Veľkosť</string>
+    <string name="studio_info_camera">Fotoaparát</string>
+    <string name="studio_info_exposure">Expozícia</string>
+    <plurals name="studio_photo_position">
+        <item quantity="one">Fotka %1$d z %2$d</item>
+        <item quantity="few">Fotka %1$d z %2$d</item>
+        <item quantity="many">Fotka %1$d z %2$d</item>
+        <item quantity="other">Fotka %1$d z %2$d</item>
+    </plurals>
+    <plurals name="studio_photos_grid_title">
+        <item quantity="one">%1$d fotka</item>
+        <item quantity="few">%1$d fotky</item>
+        <item quantity="many">%1$d fotky</item>
+        <item quantity="other">%1$d fotiek</item>
+    </plurals>
+    <plurals name="studio_photos_show_all">
+        <item quantity="one">Zobraziť %1$d fotku</item>
+        <item quantity="few">Zobraziť všetky %1$d fotky</item>
+        <item quantity="many">Zobraziť všetkých %1$d fotky</item>
+        <item quantity="other">Zobraziť všetkých %1$d fotiek</item>
+    </plurals>
+    <string name="studio_session_pick">Vyberte sériu</string>
+    <string name="studio_session_change">zmeniť sériu</string>
+    <string name="studio_session_selected">Vybraté</string>
     <string name="studio_job_preparing">Načítavam fotky…</string>
     <string name="studio_job_done_video">Uložené do Filmy/Caelis</string>
     <plurals name="studio_session_videos">
@@ -83,6 +123,10 @@
     <string name="studio_job_cancel">Zrušiť</string>
     <string name="studio_job_done">Uložené do Obrázky/Caelis</string>
     <string name="studio_job_open">Otvoriť</string>
+    <string name="studio_job_rename">Premenovať</string>
+    <string name="studio_rename_title">Premenovať súbor</string>
+    <string name="studio_rename_name">Názov</string>
+    <string name="studio_rename_failed">Súbor sa nepodarilo premenovať.</string>
     <string name="studio_job_failed">Zloženie sa nepodarilo. Skontrolujte, že fotky sú v priečinku.</string>
     <plurals name="studio_job_skipped">
         <item quantity="one">%1$d fotka inej veľkosti vynechaná</item>

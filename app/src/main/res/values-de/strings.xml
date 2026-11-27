@@ -53,7 +53,13 @@
     <string name="studio_options_fps">Bilder pro Sekunde</string>
     <string name="studio_options_resolution">Auflösung</string>
     <string name="studio_options_aspect">Seitenverhältnis</string>
-    <string name="studio_options_aspect_original">Voll</string>
+    <string name="studio_options_aspect_original">Original</string>
+    <string name="studio_framing_crop">Zuschneiden</string>
+    <string name="studio_framing_fit">Schwarze Balken</string>
+    <string name="studio_framing_drag">Ziehen Sie das Bild, um den Ausschnitt zu wählen.</string>
+    <string name="studio_framing_bars">Das ganze Bild, schwarze Balken füllen den Rest.</string>
+    <string name="studio_zoom_in">Vergrößern</string>
+    <string name="studio_zoom_out">Verkleinern</string>
     <string name="studio_options_deflicker">Flackern ausgleichen</string>
     <string name="studio_options_deflicker_summary">Glättet Helligkeitssprünge zwischen Fotos, ein dunkler werdender Sonnenuntergang bleibt</string>
     <string name="studio_options_join_mute">Videos ohne Ton verbinden</string>
@@ -69,6 +75,34 @@
     <string name="studio_action_video">Video</string>
     <string name="studio_action_growing">Wachsende Spuren</string>
     <string name="studio_action_join">Videos verbinden</string>
+    <string name="studio_action_video_summary">Zeitraffervideo aus allen Fotos</string>
+    <string name="studio_action_trails_summary">Ein Bild mit den Bahnen der Sterne am Himmel</string>
+    <string name="studio_action_growing_summary">Video, in dem die Spuren Bild für Bild wachsen</string>
+    <string name="studio_action_average_summary">Ein aus allen Fotos gemitteltes Bild mit weniger Rauschen</string>
+    <string name="studio_action_join_summary">Ein Video aus den Clips der Serie</string>
+    <string name="studio_action_start">Erstellen: %1$s</string>
+    <string name="studio_session_preview">Foto %1$d</string>
+    <string name="studio_photo_info">Fotoinformationen</string>
+    <string name="studio_info_name">Name</string>
+    <string name="studio_info_taken">Aufgenommen</string>
+    <string name="studio_info_size">Größe</string>
+    <string name="studio_info_camera">Kamera</string>
+    <string name="studio_info_exposure">Belichtung</string>
+    <plurals name="studio_photo_position">
+        <item quantity="one">Foto %1$d von %2$d</item>
+        <item quantity="other">Foto %1$d von %2$d</item>
+    </plurals>
+    <plurals name="studio_photos_grid_title">
+        <item quantity="one">%1$d Foto</item>
+        <item quantity="other">%1$d Fotos</item>
+    </plurals>
+    <plurals name="studio_photos_show_all">
+        <item quantity="one">%1$d Foto zeigen</item>
+        <item quantity="other">Alle %1$d Fotos zeigen</item>
+    </plurals>
+    <string name="studio_session_pick">Serie wählen</string>
+    <string name="studio_session_change">Serie ändern</string>
+    <string name="studio_session_selected">Ausgewählt</string>
     <string name="studio_job_preparing">Fotos werden gelesen…</string>
     <string name="studio_job_done_video">In Filme/Caelis gespeichert</string>
     <plurals name="studio_session_videos">
@@ -79,6 +113,10 @@
     <string name="studio_job_cancel">Abbrechen</string>
     <string name="studio_job_done">In Bilder/Caelis gespeichert</string>
     <string name="studio_job_open">Öffnen</string>
+    <string name="studio_job_rename">Umbenennen</string>
+    <string name="studio_rename_title">Datei umbenennen</string>
+    <string name="studio_rename_name">Name</string>
+    <string name="studio_rename_failed">Die Datei konnte nicht umbenannt werden.</string>
     <string name="studio_job_failed">Stapeln fehlgeschlagen. Prüfe, ob die Fotos noch im Ordner sind.</string>
     <plurals name="studio_job_skipped">
         <item quantity="one">%1$d Foto anderer Größe ausgelassen</item>

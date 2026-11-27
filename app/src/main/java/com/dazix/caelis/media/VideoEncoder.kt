@@ -8,7 +8,9 @@ import androidx.exifinterface.media.ExifInterface
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.effect.Presentation
+import android.graphics.Matrix
+import androidx.media3.common.util.Size
+import androidx.media3.effect.MatrixTransformation
 import androidx.media3.effect.RgbAdjustment
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
@@ -20,6 +22,8 @@ import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
 import com.dazix.caelis.domain.studio.Aspect
 import com.dazix.caelis.domain.studio.DeflickerCurve
+import com.dazix.caelis.domain.studio.Framing
+import com.dazix.caelis.domain.studio.NdcTransform
 import com.dazix.caelis.domain.studio.OutputPlan
 import com.dazix.caelis.domain.studio.Resolution
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +42,10 @@ data class TimelapseOptions(
     val resolution: Resolution = Resolution.FHD,
     val aspect: Aspect = Aspect.ORIGINAL,
     val deflicker: Boolean = true,
+    val framing: Framing = Framing.CROP,
+    val zoom: Float = 1f,
+    val cropX: Float = 0.5f,
+    val cropY: Float = 0.5f,
 )
 
 /**
@@ -53,8 +61,9 @@ class VideoEncoder(private val context: Context) {
 
     /**
      * One frame per picture. A picture is shown for 1/fps (rounded down to whole milliseconds, so
-     * it always yields exactly one frame at that rate), scaled into the plan's box with a centred
-     * crop to the aspect, and with deflicker its own brightness gain.
+     * it always yields exactly one frame at that rate), cut to the aspect where the user placed the
+     * crop or letterboxed whole (Framing), scaled into the plan's box, and with deflicker its own
+     * brightness gain.
      */
     suspend fun timelapse(
         pictures: List<Uri>,
@@ -64,7 +73,10 @@ class VideoEncoder(private val context: Context) {
     ): Uri {
         require(pictures.isNotEmpty())
         val upright = withContext(Dispatchers.IO) { uprightSize(pictures.first()) }
-        val plan = OutputPlan.frame(upright.first, upright.second, options.aspect, options.resolution)
+        val plan = OutputPlan.frame(
+            upright.first, upright.second, options.aspect, options.resolution, options.framing,
+            options.zoom, options.cropX, options.cropY,
+        )
         val gains = if (options.deflicker && pictures.size > 2) {
             withContext(Dispatchers.IO) {
                 DeflickerCurve.gains(DoubleArray(pictures.size) { i ->
@@ -75,8 +87,13 @@ class VideoEncoder(private val context: Context) {
         } else {
             null
         }
-        val presentation = Presentation.createForWidthAndHeight(
-            plan.width, plan.height, Presentation.LAYOUT_SCALE_TO_FIT_WITH_CROP,
+        // One transformation stretches the chosen window of the picture onto the output frame. The
+        // window may reach past the picture (zoomed out, FIT): what it covers there stays black.
+        // Media3's Crop refuses a rectangle outside -1..1, which is why this is not Crop + Presentation.
+        val window = windowTransformation(
+            OutputPlan.windowTransform(OutputPlan.ndc(plan.crop, upright.first, upright.second)),
+            plan.width,
+            plan.height,
         )
         val durationMs = (1000L / options.fps).coerceAtLeast(1L)
         val items = pictures.mapIndexed { i, uri ->
@@ -85,7 +102,7 @@ class VideoEncoder(private val context: Context) {
                     val f = g.toFloat()
                     add(RgbAdjustment.Builder().setRedScale(f).setGreenScale(f).setBlueScale(f).build())
                 }
-                add(presentation)
+                add(window)
             }
             EditedMediaItem.Builder(MediaItem.Builder().setUri(uri).setImageDurationMs(durationMs).build())
                 .setFrameRate(options.fps)
@@ -115,6 +132,19 @@ class VideoEncoder(private val context: Context) {
             .build()
         return export(Composition.Builder(sequence).build(), "$name.mp4", onProgress)
     }
+
+    /** [t] as a Media3 effect whose output is [width] x [height]; the same matrix for every frame. */
+    private fun windowTransformation(t: NdcTransform, width: Int, height: Int): MatrixTransformation =
+        object : MatrixTransformation {
+            private val matrix = Matrix().apply {
+                setScale(t.scaleX, t.scaleY)
+                postTranslate(t.translateX, t.translateY)
+            }
+
+            override fun configure(inputWidth: Int, inputHeight: Int): Size = Size(width, height)
+
+            override fun getMatrix(presentationTimeUs: Long): Matrix = matrix
+        }
 
     private suspend fun export(composition: Composition, displayName: String, onProgress: (Int) -> Unit): Uri {
         val out = File.createTempFile("studio", ".mp4", context.cacheDir)
