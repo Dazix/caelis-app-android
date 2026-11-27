@@ -57,6 +57,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.dazix.caelis.R
+import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.expandVertically
@@ -190,6 +200,7 @@ private fun PhotoGrid(uris: List<Uri>, onOpen: (Int) -> Unit, onDismiss: () -> U
 private fun PhotoViewer(uris: List<Uri>, start: Int, onDismiss: () -> Unit) {
     val pager = rememberPagerState(initialPage = start.coerceIn(0, uris.lastIndex)) { uris.size }
     var infoOpen by rememberSaveable { mutableStateOf(false) }
+    var zoomed by remember { mutableStateOf(false) }
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
@@ -226,8 +237,10 @@ private fun PhotoViewer(uris: List<Uri>, start: Int, onDismiss: () -> Unit) {
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
+                // A zoomed photo pans under one finger; the pager swipes again once it is back at 1x.
+                userScrollEnabled = !zoomed,
             ) { page ->
-                FullPhoto(uris[page])
+                FullPhoto(uris[page], active = page == pager.currentPage, onZoomed = { zoomed = it })
             }
             AnimatedVisibility(
                 visible = infoOpen,
@@ -245,24 +258,92 @@ private fun PhotoViewer(uris: List<Uri>, start: Int, onDismiss: () -> Unit) {
     }
 }
 
-/** The photo decoded at screen size off the main thread; a spinner until then, nothing if it fails. */
+/**
+ * The photo decoded at screen size off the main thread; a spinner until then, nothing if it fails.
+ * Pinch zooms (up to [MAX_PHOTO_ZOOM]), one finger pans a zoomed photo, a double tap toggles 2x.
+ * Screen size, not the full 12 MP: the pager composes neighbours too, and three full-size
+ * bitmaps are 150 MB; a deep zoom is therefore softer than the file.
+ */
 @Composable
-private fun FullPhoto(uri: Uri) {
+private fun FullPhoto(uri: Uri, active: Boolean, onZoomed: (Boolean) -> Unit) {
     val context = LocalContext.current
     val config = LocalConfiguration.current
     val maxSide = with(LocalDensity.current) { max(config.screenWidthDp, config.screenHeightDp).dp.roundToPx() }
     val bitmap by produceState<ImageBitmap?>(initialValue = null, uri, maxSide) {
         value = withContext(Dispatchers.IO) { PhotoInfoReader.loadBitmap(context, uri, maxSide)?.asImageBitmap() }
     }
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+    var scale by remember(uri) { mutableFloatStateOf(1f) }
+    var offset by remember(uri) { mutableStateOf(Offset.Zero) }
+    // Swiped away: the next visit starts whole, and the pager is not left locked by a zoom off screen.
+    LaunchedEffect(active) {
+        if (!active) {
+            scale = 1f
+            offset = Offset.Zero
+        }
+    }
+    LaunchedEffect(active, scale) { if (active) onZoomed(scale > 1f) }
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .clipToBounds()
+            .pointerInput(uri) {
+                // Two fingers zoom, one finger pans a zoomed photo; one finger on a whole photo is
+                // left alone so the pager can swipe.
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    do {
+                        val event = awaitPointerEvent()
+                        val fingers = event.changes.count { it.pressed }
+                        if (fingers >= 2 || scale > 1f) {
+                            val newScale = (scale * event.calculateZoom()).coerceIn(1f, MAX_PHOTO_ZOOM)
+                            // Keep the photo on the screen: it may move only by what it overhangs.
+                            val limitX = (newScale - 1f) * size.width / 2
+                            val limitY = (newScale - 1f) * size.height / 2
+                            val moved = offset + event.calculatePan()
+                            offset = Offset(moved.x.coerceIn(-limitX, limitX), moved.y.coerceIn(-limitY, limitY))
+                            scale = newScale
+                            event.changes.forEach { if (it.positionChanged()) it.consume() }
+                        }
+                    } while (event.changes.any { it.pressed })
+                }
+            }
+            .pointerInput(uri) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        if (scale > 1f) {
+                            scale = 1f
+                            offset = Offset.Zero
+                        } else {
+                            scale = 2f
+                        }
+                    },
+                )
+            },
+    ) {
         val b = bitmap
         if (b == null) {
             CircularProgressIndicator(color = Color.White)
         } else {
-            Image(bitmap = b, contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize())
+            Image(
+                bitmap = b,
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        translationX = offset.x
+                        translationY = offset.y
+                    },
+            )
         }
     }
 }
+
+/** How far a photo can be pinched in the viewer. */
+private const val MAX_PHOTO_ZOOM = 5f
 
 /**
  * The photo's info as a bottom sheet under the photo (not over it: the photo moves up). It has no
@@ -356,11 +437,6 @@ private fun InfoContent(facts: PhotoFacts?, position: Int, total: Int, locale: L
         }
         PhotoFactsFormat.camera(f.make, f.model)?.let { InfoRow(stringResource(R.string.studio_info_camera), it) }
         PhotoFactsFormat.exposureLine(f)?.let { InfoRow(stringResource(R.string.studio_info_exposure), it) }
-        InfoRow(
-            label = stringResource(R.string.studio_info_location),
-            value = PhotoFactsFormat.coordinates(f.latitude, f.longitude)
-                ?: stringResource(R.string.studio_info_location_none),
-        )
     }
 }
 

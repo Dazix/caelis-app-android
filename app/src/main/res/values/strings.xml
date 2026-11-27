@@ -54,7 +54,13 @@
     <string name="studio_options_fps">Frames per second</string>
     <string name="studio_options_resolution">Resolution</string>
     <string name="studio_options_aspect">Aspect</string>
-    <string name="studio_options_aspect_original">Full</string>
+    <string name="studio_options_aspect_original">Original</string>
+    <string name="studio_framing_crop">Crop</string>
+    <string name="studio_framing_fit">Black bars</string>
+    <string name="studio_framing_drag">Drag the picture to choose what stays in the frame.</string>
+    <string name="studio_framing_bars">The whole picture, black bars fill the rest.</string>
+    <string name="studio_zoom_in">Zoom in</string>
+    <string name="studio_zoom_out">Zoom out</string>
     <string name="studio_options_deflicker">Even out flicker</string>
     <string name="studio_options_deflicker_summary">Smooths brightness jumps between photos, keeps a sunset getting darker</string>
     <string name="studio_options_join_mute">Join videos without sound</string>
@@ -83,8 +89,6 @@
     <string name="studio_info_size">Size</string>
     <string name="studio_info_camera">Camera</string>
     <string name="studio_info_exposure">Exposure</string>
-    <string name="studio_info_location">Location</string>
-    <string name="studio_info_location_none">Not available</string>
     <plurals name="studio_photo_position">
         <item quantity="one">Photo %1$d of %2$d</item>
         <item quantity="other">Photo %1$d of %2$d</item>

@@ -166,7 +166,10 @@ class StudioViewModel(application: Application) : AndroidViewModel(application) 
         val name = outputName(session, action)
         // Read once at the start: changing an option during a run applies to the next one.
         val chosen = optionsState.value
-        val video = TimelapseOptions(chosen.fps, chosen.resolution, chosen.aspect, chosen.deflicker)
+        val video = TimelapseOptions(
+            chosen.fps, chosen.resolution, chosen.aspect, chosen.deflicker, chosen.framing,
+            chosen.zoom, chosen.cropX, chosen.cropY,
+        )
         val percent = { done: Int, total: Int -> progress(if (total > 0) done * 100 / total else null) }
         return when (action) {
             StudioAction.TRAILS, StudioAction.AVERAGE -> {

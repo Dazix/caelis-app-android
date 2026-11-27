@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dazix.caelis.R
+import com.dazix.caelis.domain.studio.Framing
+import android.net.Uri
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusRequester
@@ -142,7 +144,13 @@ fun StudioScreen(
             onRename = viewModel::rename,
         )
 
-        OptionsCard(options = options, enabled = !running, onChange = viewModel::updateOptions)
+        OptionsCard(
+            options = options,
+            enabled = !running,
+            // The framing preview pages through the chosen session's photos (the newest session until one is picked).
+            previewUris = (selected ?: state.sessions.firstOrNull())?.photoUris.orEmpty(),
+            onChange = viewModel::updateOptions,
+        )
     }
 
     if (picking) {
@@ -224,6 +232,7 @@ private const val FOLDER_FALLBACK_SHOWN = false
 private fun OptionsCard(
     options: StudioOptions,
     enabled: Boolean,
+    previewUris: List<Uri>,
     onChange: ((StudioOptions) -> StudioOptions) -> Unit,
 ) {
     SectionCard(title = stringResource(R.string.studio_options_title)) {
@@ -245,9 +254,30 @@ private fun OptionsCard(
         SegmentedChoice(
             options = Aspect.entries,
             selected = options.aspect,
-            onSelect = { a -> onChange { it.copy(aspect = a) } },
+            // A new aspect cuts along another axis or by another amount: the crop starts whole and centred.
+            onSelect = { a ->
+                onChange { if (it.aspect == a) it else it.copy(aspect = a, zoom = 1f, cropX = 0.5f, cropY = 0.5f) }
+            },
             enabled = enabled,
         ) { if (it == Aspect.ORIGINAL) stringResource(R.string.studio_options_aspect_original) else "${it.w}:${it.h}" }
+        if (options.aspect != Aspect.ORIGINAL) {
+            // Another aspect than the photo's: cut it (and where) or keep it whole with black bars.
+            SegmentedChoice(
+                options = Framing.entries,
+                selected = options.framing,
+                onSelect = { f -> onChange { it.copy(framing = f) } },
+                enabled = enabled,
+            ) { stringResource(if (it == Framing.CROP) R.string.studio_framing_crop else R.string.studio_framing_fit) }
+        }
+        // Original too: there the zoom is the only cut.
+        FramingPreview(
+            uris = previewUris,
+            aspect = options.aspect,
+            framing = options.framing,
+            view = CropView(options.zoom, options.cropX, options.cropY),
+            enabled = enabled,
+            onChange = { v -> onChange { it.copy(zoom = v.zoom, cropX = v.x, cropY = v.y) } },
+        )
         SwitchRow(
             title = stringResource(R.string.studio_options_deflicker),
             description = stringResource(R.string.studio_options_deflicker_summary),

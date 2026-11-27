@@ -5,11 +5,24 @@ data class StudioOptions(
     val fps: Int = 30,
     val resolution: Resolution = Resolution.FHD,
     val aspect: Aspect = Aspect.ORIGINAL,
+    /** How a picture of another aspect fills the frame; the crop's zoom and place (0..1, 0.5 centred). */
+    val framing: Framing = Framing.CROP,
+    val zoom: Float = 1f,
+    val cropX: Float = 0.5f,
+    val cropY: Float = 0.5f,
     val deflicker: Boolean = true,
     val joinWithoutAudio: Boolean = false,
 ) {
     /** A stored value outside the choices (an older build, a damaged file) falls back to the default. */
-    fun sanitized(): StudioOptions = if (fps in FPS_CHOICES) this else copy(fps = StudioOptions().fps)
+    fun sanitized(): StudioOptions {
+        fun unit(v: Float) = v.takeIf { !it.isNaN() }?.coerceIn(0f, 1f) ?: 0.5f
+        return copy(
+            fps = if (fps in FPS_CHOICES) fps else StudioOptions().fps,
+            zoom = zoom.takeIf { !it.isNaN() }?.coerceIn(OutputPlan.MIN_ZOOM, OutputPlan.MAX_ZOOM) ?: 1f,
+            cropX = unit(cropX),
+            cropY = unit(cropY),
+        )
+    }
 
     companion object {
         /** 25 for PAL editors, 24 for film, 60 for a smooth result from a fast interval. */

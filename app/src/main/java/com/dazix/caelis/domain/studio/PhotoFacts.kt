@@ -21,8 +21,6 @@ data class PhotoFacts(
     val fNumber: Double? = null,
     val iso: Int? = null,
     val focalMm: Double? = null,
-    val latitude: Double? = null,
-    val longitude: Double? = null,
 )
 
 /** The panel's values as text; units and number formats are not translated, labels are. */
@@ -84,16 +82,6 @@ object PhotoFactsFormat {
         }
     }
 
-    /**
-     * Five decimals (about a metre), or null for no position: Android hands an app without the media
-     * location permission the coordinates as 0, 0, which is a real place in the Gulf of Guinea.
-     */
-    fun coordinates(lat: Double?, lon: Double?): String? {
-        if (lat == null || lon == null || lat.isNaN() || lon.isNaN()) return null
-        if (lat == 0.0 && lon == 0.0) return null
-        if (abs(lat) > 90.0 || abs(lon) > 180.0) return null
-        return String.format(Locale.ROOT, "%.5f, %.5f", lat, lon)
-    }
 
     /** "4080 × 3072 · 3.2 MB"; sizes in decimal megabytes, as galleries show them. */
     fun dimensions(width: Int?, height: Int?, sizeBytes: Long?): String? = listOfNotNull(

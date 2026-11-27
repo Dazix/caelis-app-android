@@ -53,7 +53,13 @@
     <string name="studio_options_fps">Snímků za sekundu</string>
     <string name="studio_options_resolution">Rozlišení</string>
     <string name="studio_options_aspect">Poměr stran</string>
-    <string name="studio_options_aspect_original">Celý</string>
+    <string name="studio_options_aspect_original">Originál</string>
+    <string name="studio_framing_crop">Oříznout</string>
+    <string name="studio_framing_fit">Černé okraje</string>
+    <string name="studio_framing_drag">Tažením fotky vyberte, co zůstane v záběru.</string>
+    <string name="studio_framing_bars">Celá fotka, zbytek vyplní černé okraje.</string>
+    <string name="studio_zoom_in">Přiblížit</string>
+    <string name="studio_zoom_out">Oddálit</string>
     <string name="studio_options_deflicker">Vyrovnat blikání</string>
     <string name="studio_options_deflicker_summary">Srovná skoky jasu mezi fotkami, stmívání při západu zůstane</string>
     <string name="studio_options_join_mute">Spojit videa bez zvuku</string>
@@ -84,8 +90,6 @@
     <string name="studio_info_size">Velikost</string>
     <string name="studio_info_camera">Fotoaparát</string>
     <string name="studio_info_exposure">Expozice</string>
-    <string name="studio_info_location">Poloha</string>
-    <string name="studio_info_location_none">Není k dispozici</string>
     <plurals name="studio_photo_position">
         <item quantity="one">Fotka %1$d z %2$d</item>
         <item quantity="few">Fotka %1$d z %2$d</item>

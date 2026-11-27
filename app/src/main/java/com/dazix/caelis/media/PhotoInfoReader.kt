@@ -14,9 +14,6 @@ import kotlin.math.max
 /**
  * Reads one session photo for the in-app viewer: the picture at screen size, and the facts its
  * MediaStore row and EXIF carry. Nothing here is written or sent anywhere.
- *
- * GPS: without ACCESS_MEDIA_LOCATION (not declared) Android redacts the EXIF position of another
- * app's photo to 0, 0, so the position is shown only for a file that carries a real one.
  */
 object PhotoInfoReader {
 
@@ -42,7 +39,6 @@ object PhotoInfoReader {
         val exif = runCatching {
             context.contentResolver.openInputStream(uri)?.use { ExifInterface(it) }
         }.getOrNull() ?: return row
-        val latLong = exif.latLong
         return row.copy(
             width = row.width ?: exif.getAttributeInt(ExifInterface.TAG_IMAGE_WIDTH, 0).takeIf { it > 0 },
             height = row.height ?: exif.getAttributeInt(ExifInterface.TAG_IMAGE_LENGTH, 0).takeIf { it > 0 },
@@ -57,8 +53,6 @@ object PhotoInfoReader {
             fNumber = exif.getAttributeDouble(ExifInterface.TAG_F_NUMBER, 0.0).takeIf { it > 0 },
             iso = exif.getAttributeInt(ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY, 0).takeIf { it > 0 },
             focalMm = exif.getAttributeDouble(ExifInterface.TAG_FOCAL_LENGTH, 0.0).takeIf { it > 0 },
-            latitude = latLong?.getOrNull(0),
-            longitude = latLong?.getOrNull(1),
         )
     }
 

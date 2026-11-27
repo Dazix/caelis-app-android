@@ -53,7 +53,13 @@
     <string name="studio_options_fps">Klatki na sekundę</string>
     <string name="studio_options_resolution">Rozdzielczość</string>
     <string name="studio_options_aspect">Proporcje</string>
-    <string name="studio_options_aspect_original">Pełny</string>
+    <string name="studio_options_aspect_original">Oryginał</string>
+    <string name="studio_framing_crop">Przytnij</string>
+    <string name="studio_framing_fit">Czarne pasy</string>
+    <string name="studio_framing_drag">Przeciągnij zdjęcie, aby wybrać, co zostanie w kadrze.</string>
+    <string name="studio_framing_bars">Całe zdjęcie, resztę wypełnią czarne pasy.</string>
+    <string name="studio_zoom_in">Powiększ</string>
+    <string name="studio_zoom_out">Pomniejsz</string>
     <string name="studio_options_deflicker">Wyrównaj migotanie</string>
     <string name="studio_options_deflicker_summary">Wygładza skoki jasności między zdjęciami, ściemnianie o zachodzie zostaje</string>
     <string name="studio_options_join_mute">Połącz filmy bez dźwięku</string>
@@ -84,8 +90,6 @@
     <string name="studio_info_size">Rozmiar</string>
     <string name="studio_info_camera">Aparat</string>
     <string name="studio_info_exposure">Ekspozycja</string>
-    <string name="studio_info_location">Lokalizacja</string>
-    <string name="studio_info_location_none">Niedostępna</string>
     <plurals name="studio_photo_position">
         <item quantity="one">Zdjęcie %1$d z %2$d</item>
         <item quantity="few">Zdjęcie %1$d z %2$d</item>

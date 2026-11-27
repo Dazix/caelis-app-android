@@ -50,14 +50,6 @@ class PhotoFactsFormatTest {
     }
 
     @Test
-    fun redactedOrImpossibleCoordinatesAreNoPosition() {
-        assertEquals("50.76543, 15.05678", PhotoFactsFormat.coordinates(50.765432, 15.056781))
-        assertNull(PhotoFactsFormat.coordinates(0.0, 0.0))
-        assertNull(PhotoFactsFormat.coordinates(91.0, 15.0))
-        assertNull(PhotoFactsFormat.coordinates(null, 15.0))
-    }
-
-    @Test
     fun dimensionsAndSize() {
         assertEquals("4080 × 3072 · 3.2 MB", PhotoFactsFormat.dimensions(4080, 3072, 3_210_000))
         assertEquals("850 kB", PhotoFactsFormat.dimensions(null, null, 850_200))
