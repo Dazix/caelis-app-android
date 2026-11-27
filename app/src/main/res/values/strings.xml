@@ -34,6 +34,7 @@
     <string name="nav_advanced">Advanced extras</string>
     <string name="nav_advanced_summary">Optional device and camera-app specific tweaks</string>
     <string name="nav_studio">Studio</string>
+    <string name="badge_beta" translatable="false">BETA</string>
     <string name="nav_studio_summary">Videos and star trails from finished sessions</string>
     <string name="studio_title">Studio</string>
     <string name="studio_subtitle">Build a result from a session\'s photos</string>

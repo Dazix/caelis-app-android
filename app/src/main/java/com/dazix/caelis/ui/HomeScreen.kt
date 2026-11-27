@@ -372,6 +372,7 @@ fun HomeScreen(
             ListRowButton(
                 title = stringResource(R.string.nav_studio),
                 subtitle = stringResource(R.string.nav_studio_summary),
+                badge = stringResource(R.string.badge_beta),
                 icon = AppIcons.AutoAwesome,
                 onClick = { onNavigate(Screen.STUDIO) },
             )
