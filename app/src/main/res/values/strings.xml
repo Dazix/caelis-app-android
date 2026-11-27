@@ -33,6 +33,66 @@
     <string name="nav_ramp_summary">Slowly change the interval during the session</string>
     <string name="nav_advanced">Advanced extras</string>
     <string name="nav_advanced_summary">Optional device and camera-app specific tweaks</string>
+    <string name="nav_studio">Studio</string>
+    <string name="badge_beta" translatable="false">BETA</string>
+    <string name="nav_studio_summary">Videos and star trails from finished sessions</string>
+    <string name="studio_title">Studio</string>
+    <string name="studio_subtitle">Build a result from a session\'s photos</string>
+    <string name="studio_photos_title">Photos</string>
+    <string name="studio_photos_missing">Allow access to all photos and Studio finds the photos of each session itself, in whatever folder or storage the camera app saved them. They are processed only on this phone.</string>
+    <string name="studio_photos_granted">Studio finds the photos of each session itself, in any folder and on an SD card.</string>
+    <string name="studio_photos_partial">Only the photos you picked are shared, so Studio cannot see the photos of your sessions. Open app settings and set Photos and videos to Allow all.</string>
+    <string name="studio_photos_allow">Allow access</string>
+    <string name="studio_photos_settings">Open app settings</string>
+    <string name="studio_folder_instead">Use one folder instead</string>
+    <string name="studio_folder_unnamed">Folder chosen</string>
+    <string name="studio_folder_error">The folder cannot be read. Choose it again.</string>
+    <string name="studio_folder_change">Change folder</string>
+    <string name="studio_sessions_title">Finished sessions</string>
+    <string name="studio_sessions_empty">No finished time-lapse yet.</string>
+    <string name="studio_options_title">Output</string>
+    <string name="studio_options_fps">Frames per second</string>
+    <string name="studio_options_resolution">Resolution</string>
+    <string name="studio_options_aspect">Aspect</string>
+    <string name="studio_options_aspect_original">Full</string>
+    <string name="studio_options_deflicker">Even out flicker</string>
+    <string name="studio_options_deflicker_summary">Smooths brightness jumps between photos, keeps a sunset getting darker</string>
+    <string name="studio_options_join_mute">Join videos without sound</string>
+    <string name="studio_session_length">≈ %1$.1f s of video</string>
+    <string name="home_studio_shortcut_summary">Video, star trails or an average in Studio</string>
+    <plurals name="home_studio_shortcut">
+        <item quantity="one">Build from %1$d shot</item>
+        <item quantity="other">Build from %1$d shots</item>
+    </plurals>
+    <string name="studio_session_found_unknown">photos not searched</string>
+    <string name="studio_action_trails">Star trails</string>
+    <string name="studio_action_average">Average</string>
+    <string name="studio_action_video">Video</string>
+    <string name="studio_action_growing">Growing trails</string>
+    <string name="studio_action_join">Join videos</string>
+    <string name="studio_job_preparing">Reading photos…</string>
+    <string name="studio_job_done_video">Saved to Movies/Caelis</string>
+    <plurals name="studio_session_videos">
+        <item quantity="one">%1$d video</item>
+        <item quantity="other">%1$d videos</item>
+    </plurals>
+    <string name="studio_job_progress">Stacking photos… %1$d %%</string>
+    <string name="studio_job_cancel">Cancel</string>
+    <string name="studio_job_done">Saved to Pictures/Caelis</string>
+    <string name="studio_job_open">Open</string>
+    <string name="studio_job_failed">Stacking failed. Check that the photos are still in the folder.</string>
+    <plurals name="studio_job_skipped">
+        <item quantity="one">%1$d photo of another size left out</item>
+        <item quantity="other">%1$d photos of another size left out</item>
+    </plurals>
+    <plurals name="studio_session_shots">
+        <item quantity="one">%1$d shot</item>
+        <item quantity="other">%1$d shots</item>
+    </plurals>
+    <plurals name="studio_session_found">
+        <item quantity="one">%1$d photo found</item>
+        <item quantity="other">%1$d photos found</item>
+    </plurals>
     <string name="nav_permissions">Permissions</string>
     <string name="nav_permissions_summary">Everything the app needs in order to tap for you</string>
     <string name="nav_app_picker">Camera app</string>

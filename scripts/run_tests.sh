@@ -35,6 +35,7 @@ case "$TARGET" in
             --tests "com.dazix.caelis.domain.IntervalScheduleTest" \
             --tests "com.dazix.caelis.domain.SessionPlannerTest" \
             --tests "com.dazix.caelis.domain.stability.*" \
+            --tests "com.dazix.caelis.domain.studio.*" \
             --tests "com.dazix.caelis.domain.cameramode.*" \
             --tests "com.dazix.caelis.data.SettingsMappingTest" \
             --tests "com.dazix.caelis.res.*" \

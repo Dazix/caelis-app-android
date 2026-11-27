@@ -815,6 +815,8 @@ fun ListRowButton(
     subtitle: String? = null,
     onClick: () -> Unit,
     icon: ImageVector? = null,
+    /** A short tag beside the title, such as "BETA". */
+    badge: String? = null,
     trailing: @Composable (() -> Unit)? = null,
 ) {
     Row(
@@ -836,7 +838,22 @@ fun ListRowButton(
             )
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge)
+            if (badge == null) {
+                Text(text = title, style = MaterialTheme.typography.bodyLarge)
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = title, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        text = badge,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .background(MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.shapes.small)
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                    )
+                }
+            }
             if (subtitle != null) {
                 Text(
                     text = subtitle,

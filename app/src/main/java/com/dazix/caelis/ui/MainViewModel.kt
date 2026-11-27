@@ -73,7 +73,7 @@ import kotlin.math.roundToLong
 /** The app is a single activity; this is the whole navigation model. */
 enum class Screen {
     HOME, SETUP, RAMP, ADVANCED, ONBOARDING, APP_PICKER, SUN_AR, NIGHT_SKY_AR, SETTINGS, OFFLINE_TERRAIN,
-    CUSTOM_MODES, CUSTOM_MODE_EDIT,
+    CUSTOM_MODES, CUSTOM_MODE_EDIT, STUDIO,
 }
 
 enum class ModeChoice { TIMELAPSE, PERIODIC_TAP }

@@ -18,6 +18,9 @@ androidxJunit = "1.3.0"
 espresso = "3.7.0"
 uiautomator = "2.4.0"
 camerax = "1.4.1"
+# Studio: Transformer encodes the time-lapse and joins clips; no network module (no datasource-okhttp).
+media3 = "1.11.1"
+exifinterface = "1.4.2"
 flatbuffers = "24.3.25"
 # One entry for both the runtime and the matc that compiles app/src/main/materials — a .filamat is
 # only valid for the Filament version whose matc produced it.
@@ -44,6 +47,10 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
 androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-media3-transformer = { group = "androidx.media3", name = "media3-transformer", version.ref = "media3" }
+androidx-media3-effect = { group = "androidx.media3", name = "media3-effect", version.ref = "media3" }
+androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

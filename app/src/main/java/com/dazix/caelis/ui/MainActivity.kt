@@ -577,6 +577,8 @@ private fun CaelisScreen(
             onDeleteRegion = viewModel::deleteOfflineRegion,
             onBack = viewModel::back,
         )
+
+        Screen.STUDIO -> com.dazix.caelis.ui.studio.StudioScreen(onBack = viewModel::back)
     }
 }
 

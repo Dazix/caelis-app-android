@@ -53,6 +53,7 @@ import com.dazix.caelis.domain.SessionSnapshot
 import com.dazix.caelis.domain.SessionState
 import com.dazix.caelis.domain.StopReason
 import com.dazix.caelis.domain.stability.HandheldPolicy
+import com.dazix.caelis.domain.studio.StudioShortcut
 import com.dazix.caelis.domain.stability.HandheldState
 import com.dazix.caelis.overlay.OverlayPolicy
 import kotlinx.coroutines.delay
@@ -203,6 +204,21 @@ fun HomeScreen(
             launchMode = launchMode,
         )
 
+        if (StudioShortcut.offer(snapshot.state is SessionState.Stopped, snapshot.shotsTaken, timelapse)) {
+            SectionCard(tone = CardTone.ACCENT) {
+                ListRowButton(
+                    title = pluralStringResource(
+                        R.plurals.home_studio_shortcut,
+                        snapshot.shotsTaken,
+                        snapshot.shotsTaken,
+                    ),
+                    subtitle = stringResource(R.string.home_studio_shortcut_summary),
+                    icon = AppIcons.AutoAwesome,
+                    onClick = { onNavigate(Screen.STUDIO) },
+                )
+            }
+        }
+
         if (serviceUnavailable) {
             SectionCard(tone = CardTone.WARNING) {
                 Text(
@@ -351,6 +367,14 @@ fun HomeScreen(
                 subtitle = stringResource(R.string.nav_advanced_summary),
                 icon = AppIcons.Advanced,
                 onClick = { onNavigate(Screen.ADVANCED) },
+            )
+            HorizontalDivider()
+            ListRowButton(
+                title = stringResource(R.string.nav_studio),
+                subtitle = stringResource(R.string.nav_studio_summary),
+                badge = stringResource(R.string.badge_beta),
+                icon = AppIcons.AutoAwesome,
+                onClick = { onNavigate(Screen.STUDIO) },
             )
             HorizontalDivider()
             ListRowButton(

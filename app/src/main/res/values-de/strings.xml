@@ -33,6 +33,65 @@
     <string name="nav_ramp_summary">Intervall während der Sitzung langsam ändern</string>
     <string name="nav_advanced">Erweiterte Extras</string>
     <string name="nav_advanced_summary">Optionale Anpassungen für Gerät und Kamera-App</string>
+    <string name="nav_studio">Studio</string>
+    <string name="nav_studio_summary">Videos und Sternspuren aus fertigen Serien</string>
+    <string name="studio_title">Studio</string>
+    <string name="studio_subtitle">Ein Ergebnis aus den Fotos einer Serie</string>
+    <string name="studio_photos_title">Fotos</string>
+    <string name="studio_photos_missing">Erlaube den Zugriff auf alle Fotos, dann findet Studio die Fotos jeder Serie selbst, egal in welchem Ordner oder Speicher die Kamera-App sie abgelegt hat. Sie werden nur auf diesem Telefon verarbeitet.</string>
+    <string name="studio_photos_granted">Studio findet die Fotos jeder Serie selbst, in jedem Ordner und auf einer SD-Karte.</string>
+    <string name="studio_photos_partial">Nur die ausgewählten Fotos sind freigegeben, daher sieht Studio die Fotos deiner Serien nicht. Öffne die App-Einstellungen und stelle „Fotos und Videos“ auf „Alle zulassen“.</string>
+    <string name="studio_photos_allow">Zugriff erlauben</string>
+    <string name="studio_photos_settings">App-Einstellungen öffnen</string>
+    <string name="studio_folder_instead">Nur einen Ordner verwenden</string>
+    <string name="studio_folder_unnamed">Ordner gewählt</string>
+    <string name="studio_folder_error">Der Ordner kann nicht gelesen werden. Wähle ihn erneut.</string>
+    <string name="studio_folder_change">Ordner ändern</string>
+    <string name="studio_sessions_title">Fertige Serien</string>
+    <string name="studio_sessions_empty">Noch kein fertiger Zeitraffer.</string>
+    <string name="studio_options_title">Ausgabe</string>
+    <string name="studio_options_fps">Bilder pro Sekunde</string>
+    <string name="studio_options_resolution">Auflösung</string>
+    <string name="studio_options_aspect">Seitenverhältnis</string>
+    <string name="studio_options_aspect_original">Voll</string>
+    <string name="studio_options_deflicker">Flackern ausgleichen</string>
+    <string name="studio_options_deflicker_summary">Glättet Helligkeitssprünge zwischen Fotos, ein dunkler werdender Sonnenuntergang bleibt</string>
+    <string name="studio_options_join_mute">Videos ohne Ton verbinden</string>
+    <string name="studio_session_length">≈ %1$.1f s Video</string>
+    <string name="home_studio_shortcut_summary">Video, Sternspuren oder Mittelwert im Studio</string>
+    <plurals name="home_studio_shortcut">
+        <item quantity="one">Aus %1$d Aufnahme erstellen</item>
+        <item quantity="other">Aus %1$d Aufnahmen erstellen</item>
+    </plurals>
+    <string name="studio_session_found_unknown">Fotos nicht gesucht</string>
+    <string name="studio_action_trails">Sternspuren</string>
+    <string name="studio_action_average">Mittelwert</string>
+    <string name="studio_action_video">Video</string>
+    <string name="studio_action_growing">Wachsende Spuren</string>
+    <string name="studio_action_join">Videos verbinden</string>
+    <string name="studio_job_preparing">Fotos werden gelesen…</string>
+    <string name="studio_job_done_video">In Filme/Caelis gespeichert</string>
+    <plurals name="studio_session_videos">
+        <item quantity="one">%1$d Video</item>
+        <item quantity="other">%1$d Videos</item>
+    </plurals>
+    <string name="studio_job_progress">Fotos werden gestapelt… %1$d %%</string>
+    <string name="studio_job_cancel">Abbrechen</string>
+    <string name="studio_job_done">In Bilder/Caelis gespeichert</string>
+    <string name="studio_job_open">Öffnen</string>
+    <string name="studio_job_failed">Stapeln fehlgeschlagen. Prüfe, ob die Fotos noch im Ordner sind.</string>
+    <plurals name="studio_job_skipped">
+        <item quantity="one">%1$d Foto anderer Größe ausgelassen</item>
+        <item quantity="other">%1$d Fotos anderer Größe ausgelassen</item>
+    </plurals>
+    <plurals name="studio_session_shots">
+        <item quantity="one">%1$d Aufnahme</item>
+        <item quantity="other">%1$d Aufnahmen</item>
+    </plurals>
+    <plurals name="studio_session_found">
+        <item quantity="one">%1$d Foto gefunden</item>
+        <item quantity="other">%1$d Fotos gefunden</item>
+    </plurals>
     <string name="nav_permissions">Berechtigungen</string>
     <string name="nav_permissions_summary">Alles, was die App zum Antippen für Sie braucht</string>
     <string name="nav_app_picker">Kamera-App</string>
